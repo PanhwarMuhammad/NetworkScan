@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.muhammad.networkscan.models.RecordResult
 
 /**
  * ViewPager2 adapter.
@@ -35,7 +36,6 @@ class RecordAdapter : RecyclerView.Adapter<RecordAdapter.RecordViewHolder>() {
         holder.bind(records[position])
     }
 
-    // ── ViewHolder ────────────────────────────────────────────────────────────
 
     class RecordViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
@@ -53,19 +53,18 @@ class RecordAdapter : RecyclerView.Adapter<RecordAdapter.RecordViewHolder>() {
 
             txtRecord.text = "Record  #${r.rowNumber}"
 
-            // ── Verdict + card background color ───────────────────────────────
             if (r.isMalicious) {
-                txtVerdict.text = "🔴  MALICIOUS"
+                txtVerdict.text = "MALICIOUS"
                 txtVerdict.setTextColor(Color.parseColor("#C62828"))
                 cardRoot.setBackgroundColor(Color.parseColor("#FFF3F3"))
             } else {
-                txtVerdict.text = "🟢  NON-MALICIOUS"
+                txtVerdict.text = "NON-MALICIOUS"
                 txtVerdict.setTextColor(Color.parseColor("#2E7D32"))
                 cardRoot.setBackgroundColor(Color.parseColor("#F3FFF3"))
             }
 
-            // ── Class number for predicted attack type ────────────────────────
             // classNumber is -1 when the name is UNKNOWN_TRUNCATED
+
             if (r.classNumber >= 0) {
                 txtClassNum.visibility = View.VISIBLE
                 txtClassNum.text       = "Class  #${r.classNumber}"
@@ -73,10 +72,8 @@ class RecordAdapter : RecyclerView.Adapter<RecordAdapter.RecordViewHolder>() {
                 txtClassNum.visibility = View.GONE
             }
 
-            // ── Attack type name ──────────────────────────────────────────────
             txtAttack.text = r.attackType
 
-            // ── Truncation warning ────────────────────────────────────────────
             if (r.isTruncated) {
                 txtTruncNote.visibility = View.VISIBLE
                 txtTruncNote.text       = "⚠  Rule branch truncated in rules file"
@@ -84,7 +81,6 @@ class RecordAdapter : RecyclerView.Adapter<RecordAdapter.RecordViewHolder>() {
                 txtTruncNote.visibility = View.GONE
             }
 
-            // ── Actual label + its class number (only if CSV has label column) ─
             if (r.actualLabel != null) {
                 txtActual.visibility    = View.VISIBLE
                 txtActualNum.visibility = View.VISIBLE
@@ -92,7 +88,6 @@ class RecordAdapter : RecyclerView.Adapter<RecordAdapter.RecordViewHolder>() {
 
                 txtActual.text = "Actual:  ${r.actualLabel}"
 
-                // Look up the class number for the actual label
                 val actualNum = NetworkTrafficClassifier.classNumberFor(r.actualLabel)
                 txtActualNum.text = if (actualNum >= 0) "Actual Class  #$actualNum" else ""
                 txtActualNum.visibility = if (actualNum >= 0) View.VISIBLE else View.GONE

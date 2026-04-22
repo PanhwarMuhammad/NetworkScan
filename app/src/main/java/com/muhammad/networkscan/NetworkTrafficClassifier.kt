@@ -21,9 +21,6 @@ package com.muhammad.networkscan
  *   Every such branch returns [UNKNOWN_TRUNCATED] so you can spot them
  *   at runtime and decide how to handle them (e.g. majority-class fallback).
  *
- * USAGE:
- *   val sample = NetworkFlowSample( ... )
- *   val result = NetworkTrafficClassifier.classify(sample)
  */
 object NetworkTrafficClassifier {
 

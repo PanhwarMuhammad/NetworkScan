@@ -10,13 +10,13 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager2.widget.ViewPager2
+import com.muhammad.networkscan.models.RecordResult
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
 
-    // ── Views ─────────────────────────────────────────────────────────────────
     private lateinit var btnImport     : Button
     private lateinit var progressBar   : ProgressBar
     private lateinit var txtSummary    : TextView
@@ -25,20 +25,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnNext       : Button
     private lateinit var txtPageCounter: TextView
 
-    // ── Adapter ───────────────────────────────────────────────────────────────
     private lateinit var adapter: RecordAdapter
 
     private val PICK_CSV_FILE = 100
 
-    // Single background thread for CSV reading + 5-second delays
     private val executor = Executors.newSingleThreadExecutor()
 
     @Volatile private var isProcessing = false
 
-    // Only class that is non-malicious
     private val BENIGN_CLASS = "BenignTraffic"
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,14 +48,11 @@ class MainActivity : AppCompatActivity() {
         btnNext        = findViewById(R.id.btnNext)
         txtPageCounter = findViewById(R.id.txtPageCounter)
 
-        // Set up adapter
         adapter = RecordAdapter()
         viewPager.adapter = adapter
 
-        // Disable swipe gestures — navigation is arrow-only
         viewPager.isUserInputEnabled = false
 
-        // ── Arrow buttons ─────────────────────────────────────────────────────
         btnPrev.setOnClickListener {
             val target = viewPager.currentItem - 1
             if (target >= 0) viewPager.setCurrentItem(target, true)
@@ -70,7 +63,6 @@ class MainActivity : AppCompatActivity() {
             if (target < adapter.itemCount) viewPager.setCurrentItem(target, true)
         }
 
-        // Update arrow enabled state and counter whenever the page changes
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 updateNavBar(position)
@@ -80,7 +72,6 @@ class MainActivity : AppCompatActivity() {
         btnImport.setOnClickListener { openFilePicker() }
     }
 
-    // ── Navigation bar ────────────────────────────────────────────────────────
 
     private fun updateNavBar(position: Int) {
         val total = adapter.itemCount
@@ -89,7 +80,6 @@ class MainActivity : AppCompatActivity() {
         txtPageCounter.text     = if (total == 0) "—" else "${position + 1} / $total"
     }
 
-    // ── File picker ───────────────────────────────────────────────────────────
 
     private fun openFilePicker() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
@@ -107,10 +97,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ── Start processing ──────────────────────────────────────────────────────
 
     private fun startProcessing(uri: Uri) {
-        // Reset adapter for new session
         adapter = RecordAdapter()
         viewPager.adapter = adapter
         updateNavBar(0)
@@ -135,11 +123,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ── Core loop ─────────────────────────────────────────────────────────────
-
+    // Core loop
     private fun processRecords(reader: BufferedReader) {
 
-        // 1. Parse header
         val headerLine = reader.readLine() ?: run {
             runOnUiThread { txtSummary.text = "Error: empty file"; resetUI() }
             return
@@ -182,7 +168,6 @@ class MainActivity : AppCompatActivity() {
         val iWeight        = idx("Weight")
         val iLabel         = headers.indexOf("label")   // -1 if absent
 
-        // 2. Row-by-row loop
         var rowNum    = 0
         var correct   = 0
         var wrong     = 0
@@ -235,17 +220,14 @@ class MainActivity : AppCompatActivity() {
             val actualLabel = if (iLabel != -1) cols[iLabel].trim() else null
             val isTruncated = predicted == NetworkTrafficClassifier.UNKNOWN_TRUNCATED
 
-            // Resolve display name
             val attackType = when {
                 !isTruncated        -> predicted
                 actualLabel != null -> actualLabel
                 else                -> "Unknown Attack"
             }
 
-            // Verdict — truncated is always malicious
             val isMalicious = isTruncated || attackType != BENIGN_CLASS
 
-            // Accuracy
             val isCorrect: Boolean? = when {
                 actualLabel == null -> null
                 isTruncated        -> null   // truncated = not a tree decision
@@ -262,15 +244,14 @@ class MainActivity : AppCompatActivity() {
             val classNumber = NetworkTrafficClassifier.classNumberFor(attackType)
 
 
-            // Build the record and push to adapter on UI thread
             val record = RecordResult(
-                rowNumber   = rowNum,
-                attackType  = attackType,
+                rowNumber = rowNum,
+                attackType = attackType,
                 classNumber = classNumber,
                 isMalicious = isMalicious,
                 isTruncated = isTruncated,
                 actualLabel = actualLabel,
-                isCorrect   = isCorrect
+                isCorrect = isCorrect
             )
 
             val summaryText = if (iLabel != -1)
@@ -293,11 +274,9 @@ class MainActivity : AppCompatActivity() {
                 updateNavBar(viewPager.currentItem)
             }
 
-            // 5-second pause before next record
             Thread.sleep(5000)
         }
 
-        // 3. Final summary — add a summary "card" by updating the tally bar
         reader.close()
 
         val finalSummary = if (iLabel != -1) {
@@ -313,7 +292,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private fun resetUI() {
         isProcessing           = false
