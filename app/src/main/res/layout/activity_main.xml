@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    activity_main.xml
+    Place in:  app/src/main/res/layout/activity_main.xml
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F0F2F5">
+
+    <!-- ── Top bar ─────────────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="40dp"
+        android:padding="12dp"
+        android:gravity="center_vertical"
+        android:background="#FFFFFF"
+        android:elevation="4dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Network Traffic Classifier"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="#1A1A1A"/>
+
+        <Button
+            android:id="@+id/btnImportCsv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Import CSV"
+            android:textSize="13sp"/>
+
+    </LinearLayout>
+
+    <!-- ── Progress bar ────────────────────────────────────────────────── -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:indeterminate="true"
+        android:visibility="gone"/>
+
+    <!-- ── Running tally ───────────────────────────────────────────────── -->
+    <TextView
+        android:id="@+id/txtSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:textSize="13sp"
+        android:textColor="#555555"
+        android:fontFamily="monospace"/>
+
+    <!-- ── ViewPager2 (the paged cards) ───────────────────────────────── -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginVertical="4dp"/>
+
+    <!-- ── Navigation row: ← counter → ───────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="8dp"
+        android:background="#FFFFFF">
+
+        <!-- Left arrow -->
+        <Button
+            android:id="@+id/btnPrev"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="◀"
+            android:textSize="18sp"
+            android:enabled="false"/>
+
+        <!-- Page counter: "3 / 182" -->
+        <TextView
+            android:id="@+id/txtPageCounter"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="—"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:fontFamily="monospace"/>
+
+        <!-- Right arrow -->
+        <Button
+            android:id="@+id/btnNext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="▶"
+            android:textSize="18sp"
+            android:enabled="false"/>
+    </LinearLayout>
+
+</LinearLayout>

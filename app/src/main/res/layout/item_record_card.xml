@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_record_card.xml
+    One page inside the ViewPager2. Shows the classification result for a single record.
+    Place in:  app/src/main/res/layout/item_record_card.xml
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/cardRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    android:background="#FFFFFF">
+
+    <!-- Record number -->
+    <TextView
+        android:id="@+id/txtRecordNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textColor="#888888"
+        android:textStyle="bold"
+        android:letterSpacing="0.08"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- MALICIOUS / NON-MALICIOUS -->
+    <TextView
+        android:id="@+id/txtVerdict"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="60dp"
+        android:layout_height="2dp"
+        android:background="#DDDDDD"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- "ATTACK TYPE" label -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ATTACK TYPE"
+        android:textSize="11sp"
+        android:textColor="#AAAAAA"
+        android:letterSpacing="0.12"
+        android:layout_marginBottom="4dp"/>
+
+    <!-- Predicted class name -->
+    <TextView
+        android:id="@+id/txtAttackType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#1A1A1A"
+        android:gravity="center"
+        android:layout_marginBottom="4dp"/>
+
+    <!-- Predicted class number — e.g. "Class #6" -->
+    <TextView
+        android:id="@+id/txtClassNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textColor="#777777"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:layout_marginBottom="12dp"
+        android:visibility="gone"/>
+
+    <!-- Truncation warning — hidden when not truncated -->
+    <TextView
+        android:id="@+id/txtTruncNote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="#E65100"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone"/>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="60dp"
+        android:layout_height="2dp"
+        android:background="#DDDDDD"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Actual label from CSV (hidden if no label column) -->
+    <TextView
+        android:id="@+id/txtActualLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="13sp"
+        android:textColor="#555555"
+        android:gravity="center"
+        android:layout_marginBottom="2dp"
+        android:visibility="gone"/>
+
+    <!-- Actual class number — e.g. "Actual Class #6" -->
+    <TextView
+        android:id="@+id/txtActualClassNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="#888888"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:layout_marginBottom="10dp"
+        android:visibility="gone"/>
+
+    <!-- Match result: ✓ Correct / ✗ Wrong / ⚠ Truncated -->
+    <TextView
+        android:id="@+id/txtMatch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:visibility="gone"/>
+
+</LinearLayout>
