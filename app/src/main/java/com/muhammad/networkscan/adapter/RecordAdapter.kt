@@ -21,6 +21,9 @@ class RecordAdapter : RecyclerView.Adapter<RecordAdapter.RecordViewHolder>() {
         records.add(record)
         notifyItemInserted(records.size - 1)
     }
+    fun getRecord(position: Int): RecordResult? {
+        return records.getOrNull(position)
+    }
 
     fun getCount(): Int = records.size
 
@@ -75,22 +78,22 @@ class RecordAdapter : RecyclerView.Adapter<RecordAdapter.RecordViewHolder>() {
             txtAttack.text = r.attackType
 
             if (r.isTruncated) {
-                txtTruncNote.visibility = View.VISIBLE
+                txtTruncNote.visibility = View.GONE
                 txtTruncNote.text       = "⚠  Rule branch truncated in rules file"
             } else {
                 txtTruncNote.visibility = View.GONE
             }
 
             if (r.actualLabel != null) {
-                txtActual.visibility    = View.VISIBLE
-                txtActualNum.visibility = View.VISIBLE
+                txtActual.visibility    = View.GONE
+                txtActualNum.visibility = View.GONE
                 txtMatch.visibility     = View.VISIBLE
 
                 txtActual.text = "Actual:  ${r.actualLabel}"
 
                 val actualNum = NetworkTrafficClassifier.classNumberFor(r.actualLabel)
                 txtActualNum.text = if (actualNum >= 0) "Actual Class  #$actualNum" else ""
-                txtActualNum.visibility = if (actualNum >= 0) View.VISIBLE else View.GONE
+                // txtActualNum.visibility = if (actualNum >= 0) View.VISIBLE else View.GONE
 
                 val (matchText, matchColor) = when {
                     r.isTruncated       -> "⚠  Truncated (malicious)" to Color.parseColor("#E65100")

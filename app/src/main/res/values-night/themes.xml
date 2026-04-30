@@ -3,5 +3,7 @@
     <style name="Base.Theme.NetworkScan" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="colorPrimary">#8B93FF</item>
+        <item name="colorOnPrimary">#000000</item>
     </style>
 </resources>

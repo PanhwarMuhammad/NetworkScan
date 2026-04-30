@@ -10,6 +10,8 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager2.widget.ViewPager2
+import com.muhammad.networkscan.databinding.ActivityMainBinding
+import com.muhammad.networkscan.fragments.RecordDetails
 import com.muhammad.networkscan.models.RecordResult
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -25,6 +27,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnNext       : Button
     private lateinit var txtPageCounter: TextView
 
+    @Volatile private var isPaused = false
+    private val pauseLock = Object()
+
     private lateinit var adapter: RecordAdapter
 
     private val PICK_CSV_FILE = 100
@@ -35,10 +40,12 @@ class MainActivity : AppCompatActivity() {
 
     private val BENIGN_CLASS = "BenignTraffic"
 
+    lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         btnImport      = findViewById(R.id.btnImportCsv)
         progressBar    = findViewById(R.id.progressBar)
@@ -68,6 +75,20 @@ class MainActivity : AppCompatActivity() {
                 updateNavBar(position)
             }
         })
+
+        binding.moreInfo.setOnClickListener {
+            val currentPos = viewPager.currentItem
+
+            // 2. Get the record data from the adapter
+            val record = adapter.getRecord(currentPos)
+
+            // 3. Show the Detail Fragment if a record exists
+            if (record != null) {
+                val fragment = RecordDetails(record)
+                supportFragmentManager.beginTransaction().add(fragment, "Record details").commit()            }
+
+
+        }
 
         btnImport.setOnClickListener { openFilePicker() }
     }
@@ -103,8 +124,10 @@ class MainActivity : AppCompatActivity() {
         viewPager.adapter = adapter
         updateNavBar(0)
 
+
+        binding.btnImportCsv.visibility = View.GONE
+        binding.moreInfo.visibility = View.VISIBLE
         isProcessing           = true
-        btnImport.isEnabled    = false
         progressBar.visibility = View.VISIBLE
         txtSummary.text        = "Loading…"
         txtPageCounter.text    = "—"
@@ -175,6 +198,12 @@ class MainActivity : AppCompatActivity() {
 
         var line: String?
         while (reader.readLine().also { line = it } != null && isProcessing) {
+            // pause logic for foreground process handling
+            synchronized(pauseLock) {
+                while (isPaused) {
+                    pauseLock.wait()
+                }
+            }
             val raw = line!!
             if (raw.isBlank()) continue
             val cols = raw.split(",")
@@ -274,7 +303,8 @@ class MainActivity : AppCompatActivity() {
                 updateNavBar(viewPager.currentItem)
             }
 
-            Thread.sleep(5000)
+            // requirement is 5 seconds. while i keep it to 1 sec for testing
+            Thread.sleep(2500)
         }
 
         reader.close()
@@ -303,5 +333,20 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         isProcessing = false
         executor.shutdown()
+    }
+
+    // pause/ resume logic for foreground process handling
+    override fun onPause() {
+        super.onPause()
+        isPaused = true
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        synchronized(pauseLock) {
+            isPaused = false
+            pauseLock.notifyAll()
+        }
     }
 }

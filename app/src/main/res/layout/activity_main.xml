@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,32 +8,47 @@
     android:background="#F0F2F5">
 
     <LinearLayout
+        android:id="@+id/import_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_marginTop="40dp"
-        android:padding="12dp"
-        android:gravity="center_vertical"
         android:background="#FFFFFF"
-        android:elevation="4dp">
+        android:elevation="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Network Traffic Classifier"
+            android:textColor="#1A1A1A"
             android:textSize="17sp"
-            android:textStyle="bold"
-            android:textColor="#1A1A1A"/>
+            android:textStyle="bold" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnImportCsv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Import CSV"
-            android:textSize="13sp"/>
+            android:textSize="13sp"
+            style="@style/Widget.Material3.Button"
 
+            app:cornerRadius="10dp"
+            android:textColor="?attr/colorOnPrimary"
+            app:backgroundTint="?attr/colorPrimary" />
+
+        <ImageView
+            android:id="@+id/more_info"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/info"
+            android:layout_gravity="end"
+            android:visibility="gone">
+        </ImageView>
     </LinearLayout>
+
 
     <ProgressBar
         android:id="@+id/progressBar"
@@ -67,13 +82,15 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:padding="8dp"
+        android:layout_marginBottom="35dp"
         android:background="#FFFFFF">
 
         <Button
             android:id="@+id/btnPrev"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="60dp"
             android:text="◀"
+            style="@style/Widget.Material3.Button"
             android:textSize="18sp"
             android:enabled="false"/>
 
@@ -91,8 +108,9 @@
         <Button
             android:id="@+id/btnNext"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="60dp"
             android:text="▶"
+            style="@style/Widget.Material3.Button"
             android:textSize="18sp"
             android:enabled="false"/>
     </LinearLayout>

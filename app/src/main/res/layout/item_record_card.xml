@@ -16,8 +16,10 @@
         android:textSize="14sp"
         android:textColor="#888888"
         android:textStyle="bold"
+        android:text="record 1"
         android:letterSpacing="0.08"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp"
+        android:visibility="gone"/>
 
     <TextView
         android:id="@+id/txtVerdict"
@@ -25,6 +27,7 @@
         android:layout_height="wrap_content"
         android:textSize="26sp"
         android:textStyle="bold"
+        android:text="Malecious"
         android:layout_marginBottom="16dp"/>
 
     <View
@@ -49,6 +52,7 @@
         android:textSize="18sp"
         android:textStyle="bold"
         android:textColor="#1A1A1A"
+        android:text="Brutefrce"
         android:gravity="center"
         android:layout_marginBottom="4dp"/>
 
@@ -108,5 +112,7 @@
         android:textStyle="bold"
         android:gravity="center"
         android:visibility="gone"/>
+
+
 
 </LinearLayout>
