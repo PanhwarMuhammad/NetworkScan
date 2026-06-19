@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- ── MACRO: card with labelled rows ─────────────────────────
+             We define a helper style to keep XML DRY.
+             Each "section" is a MaterialCardView containing a TableLayout.
+        ─────────────────────────────────────────────────────────────── -->
+
+        <!-- ===== IDENTITY ===== -->
+        <TextView style="@style/NidsSectionHeader" android:text="Flow Identity" />
+        <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
+            <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:padding="10dp" android:stretchColumns="1">
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Flow ID"/>
+                    <TextView android:id="@+id/tv_detail_flow_id" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Timestamp"/>
+                    <TextView android:id="@+id/tv_detail_timestamp" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Protocol"/>
+                    <TextView android:id="@+id/tv_detail_protocol" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Src IP"/>
+                    <TextView android:id="@+id/tv_detail_src_ip" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Dst IP"/>
+                    <TextView android:id="@+id/tv_detail_dst_ip" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Src Port"/>
+                    <TextView android:id="@+id/tv_detail_src_port" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Dst Port"/>
+                    <TextView android:id="@+id/tv_detail_dst_port" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Duration"/>
+                    <TextView android:id="@+id/tv_detail_duration" style="@style/NidsValue"/></TableRow>
+
+            </TableLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ===== PACKET COUNTS ===== -->
+        <TextView style="@style/NidsSectionHeader" android:text="Packet &amp; Byte Counts" />
+        <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
+            <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:padding="10dp" android:stretchColumns="1">
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Total Fwd Pkts"/>
+                    <TextView android:id="@+id/tv_detail_fwd_pkts" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Total Bwd Pkts"/>
+                    <TextView android:id="@+id/tv_detail_bwd_pkts" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Total Packets"/>
+                    <TextView android:id="@+id/tv_detail_total_pkts" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Fwd Bytes"/>
+                    <TextView android:id="@+id/tv_detail_fwd_bytes" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Bwd Bytes"/>
+                    <TextView android:id="@+id/tv_detail_bwd_bytes" style="@style/NidsValue"/></TableRow>
+
+            </TableLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ===== PACKET LENGTH STATS ===== -->
+        <TextView style="@style/NidsSectionHeader" android:text="Packet Length Statistics" />
+        <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
+            <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:padding="10dp" android:stretchColumns="1">
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="All Max"/>
+                    <TextView android:id="@+id/tv_detail_pkt_len_max" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="All Min"/>
+                    <TextView android:id="@+id/tv_detail_pkt_len_min" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="All Mean"/>
+                    <TextView android:id="@+id/tv_detail_pkt_len_mean" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="All Std"/>
+                    <TextView android:id="@+id/tv_detail_pkt_len_std" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Variance"/>
+                    <TextView android:id="@+id/tv_detail_pkt_len_var" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Fwd Max"/>
+                    <TextView android:id="@+id/tv_detail_fwd_len_max" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Fwd Min"/>
+                    <TextView android:id="@+id/tv_detail_fwd_len_min" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Fwd Mean"/>
+                    <TextView android:id="@+id/tv_detail_fwd_len_mean" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Fwd Std"/>
+                    <TextView android:id="@+id/tv_detail_fwd_len_std" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Bwd Max"/>
+                    <TextView android:id="@+id/tv_detail_bwd_len_max" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Bwd Min"/>
+                    <TextView android:id="@+id/tv_detail_bwd_len_min" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Bwd Mean"/>
+                    <TextView android:id="@+id/tv_detail_bwd_len_mean" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Bwd Std"/>
+                    <TextView android:id="@+id/tv_detail_bwd_len_std" style="@style/NidsValue"/></TableRow>
+
+            </TableLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ===== FLOW RATES ===== -->
+        <TextView style="@style/NidsSectionHeader" android:text="Flow Rate Stats" />
+        <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
+            <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:padding="10dp" android:stretchColumns="1">
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Flow B/s"/>
+                    <TextView android:id="@+id/tv_detail_flow_bps" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Flow pkt/s"/>
+                    <TextView android:id="@+id/tv_detail_flow_pps" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Fwd pkt/s"/>
+                    <TextView android:id="@+id/tv_detail_fwd_pps" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Bwd pkt/s"/>
+                    <TextView android:id="@+id/tv_detail_bwd_pps" style="@style/NidsValue"/></TableRow>
+
+            </TableLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ===== IAT ===== -->
+        <TextView style="@style/NidsSectionHeader" android:text="Inter-Arrival Times (µs)" />
+        <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
+            <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:padding="10dp" android:stretchColumns="1">
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Flow IAT Mean"/>
+                    <TextView android:id="@+id/tv_detail_flow_iat_mean" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Flow IAT Std"/>
+                    <TextView android:id="@+id/tv_detail_flow_iat_std" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Flow IAT Max"/>
+                    <TextView android:id="@+id/tv_detail_flow_iat_max" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Flow IAT Min"/>
+                    <TextView android:id="@+id/tv_detail_flow_iat_min" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Fwd IAT Total"/>
+                    <TextView android:id="@+id/tv_detail_fwd_iat_tot" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Fwd IAT Mean"/>
+                    <TextView android:id="@+id/tv_detail_fwd_iat_mean" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Fwd IAT Std"/>
+                    <TextView android:id="@+id/tv_detail_fwd_iat_std" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Fwd IAT Max"/>
+                    <TextView android:id="@+id/tv_detail_fwd_iat_max" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Fwd IAT Min"/>
+                    <TextView android:id="@+id/tv_detail_fwd_iat_min" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Bwd IAT Total"/>
+                    <TextView android:id="@+id/tv_detail_bwd_iat_tot" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Bwd IAT Mean"/>
+                    <TextView android:id="@+id/tv_detail_bwd_iat_mean" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Bwd IAT Std"/>
+                    <TextView android:id="@+id/tv_detail_bwd_iat_std" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Bwd IAT Max"/>
+                    <TextView android:id="@+id/tv_detail_bwd_iat_max" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Bwd IAT Min"/>
+                    <TextView android:id="@+id/tv_detail_bwd_iat_min" style="@style/NidsValue"/></TableRow>
+
+            </TableLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ===== TCP FLAGS ===== -->
+        <TextView style="@style/NidsSectionHeader" android:text="TCP Flags" />
+        <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
+            <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:padding="10dp" android:stretchColumns="1">
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="All Flags"/>
+                    <TextView android:id="@+id/tv_detail_flags" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Fwd Flags"/>
+                    <TextView android:id="@+id/tv_detail_fwd_flags" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Bwd Flags"/>
+                    <TextView android:id="@+id/tv_detail_bwd_flags" style="@style/NidsValue"/></TableRow>
+
+            </TableLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ===== RATIOS / SEGMENT SIZES ===== -->
+        <TextView style="@style/NidsSectionHeader" android:text="Ratios &amp; Segment Sizes" />
+        <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
+            <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:padding="10dp" android:stretchColumns="1">
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Down/Up Ratio"/>
+                    <TextView android:id="@+id/tv_detail_down_up" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Avg Pkt Size"/>
+                    <TextView android:id="@+id/tv_detail_avg_pkt_size" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Avg Fwd Segment"/>
+                    <TextView android:id="@+id/tv_detail_avg_fwd_seg" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Avg Bwd Segment"/>
+                    <TextView android:id="@+id/tv_detail_avg_bwd_seg" style="@style/NidsValue"/></TableRow>
+
+            </TableLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ===== SUBFLOW ===== -->
+        <TextView style="@style/NidsSectionHeader" android:text="Subflow Stats" />
+        <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
+            <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:padding="10dp" android:stretchColumns="1">
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Subflow Fwd Pkts"/>
+                    <TextView android:id="@+id/tv_detail_sub_fwd_pkts" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Subflow Fwd Bytes"/>
+                    <TextView android:id="@+id/tv_detail_sub_fwd_bytes" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Subflow Bwd Pkts"/>
+                    <TextView android:id="@+id/tv_detail_sub_bwd_pkts" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Subflow Bwd Bytes"/>
+                    <TextView android:id="@+id/tv_detail_sub_bwd_bytes" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Init Win Fwd"/>
+                    <TextView android:id="@+id/tv_detail_init_win_fwd" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Init Win Bwd"/>
+                    <TextView android:id="@+id/tv_detail_init_win_bwd" style="@style/NidsValue"/></TableRow>
+
+            </TableLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ===== ACTIVE / IDLE ===== -->
+        <TextView style="@style/NidsSectionHeader" android:text="Active / Idle Periods (µs)" />
+        <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
+            <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:padding="10dp" android:stretchColumns="1">
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Active Min"/>
+                    <TextView android:id="@+id/tv_detail_active_min" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Active Mean"/>
+                    <TextView android:id="@+id/tv_detail_active_mean" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Active Max"/>
+                    <TextView android:id="@+id/tv_detail_active_max" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Active Std"/>
+                    <TextView android:id="@+id/tv_detail_active_std" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Idle Min"/>
+                    <TextView android:id="@+id/tv_detail_idle_min" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Idle Mean"/>
+                    <TextView android:id="@+id/tv_detail_idle_mean" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Idle Max"/>
+                    <TextView android:id="@+id/tv_detail_idle_max" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Idle Std"/>
+                    <TextView android:id="@+id/tv_detail_idle_std" style="@style/NidsValue"/></TableRow>
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Act Data Pkt Fwd"/>
+                    <TextView android:id="@+id/tv_detail_act_data_pkt" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Min Seg Size Fwd"/>
+                    <TextView android:id="@+id/tv_detail_min_seg_size" style="@style/NidsValue"/></TableRow>
+
+            </TableLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ===== EXTRAS ===== -->
+        <TextView style="@style/NidsSectionHeader" android:text="App / Encryption Info" />
+        <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
+            <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:padding="10dp" android:stretchColumns="1">
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="App Package"/>
+                    <TextView android:id="@+id/tv_detail_app" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="Encrypted?"/>
+                    <TextView android:id="@+id/tv_detail_encrypted" style="@style/NidsValue"/></TableRow>
+                <TableRow><TextView style="@style/NidsLabel" android:text="TLS SNI"/>
+                    <TextView android:id="@+id/tv_detail_sni" style="@style/NidsValue"/></TableRow>
+
+            </TableLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ===== CLASSIFICATION ===== -->
+        <TextView style="@style/NidsSectionHeader" android:text="Classification" />
+        <com.google.android.material.card.MaterialCardView style="@style/NidsCard"
+            android:layout_marginBottom="24dp">
+            <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:padding="10dp" android:stretchColumns="1">
+
+                <TableRow><TextView style="@style/NidsLabel" android:text="Predicted Label"/>
+                    <TextView android:id="@+id/tv_detail_label" style="@style/NidsValue"
+                        android:textStyle="bold"/></TableRow>
+
+            </TableLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

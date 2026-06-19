@@ -2,4 +2,38 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Backgrounds -->
+    <color name="bg_surface">#0F1117</color>
+    <color name="control_strip_bg">#161920</color>
+    <color name="toolbar_bg">#161920</color>
+    <color name="divider">#2A2D3A</color>
+
+    <!-- Text -->
+    <color name="label_text">#B0C4FF</color>
+
+    <!-- Protocol badges -->
+    <color name="proto_tcp">#1E6FD9</color>
+    <color name="proto_udp">#1DAA75</color>
+    <color name="proto_icmp">#D97B1E</color>
+    <color name="proto_other">#7B4FD9</color>
+
+    <!-- Controls -->
+    <color name="fab_bg">#1E6FD9</color>
+    <color name="flag_tint">#F4C430</color>
+
+    <color name="bg_dark">#FF121212</color>
+    <color name="card_bg">#FF1E1E1E</color>
+    <color name="card_info_bg">#FF1A2535</color>
+    <color name="text_primary">#FFFFFFFF</color>
+    <color name="text_secondary">#FF9E9E9E</color>
+
+    <color name="capture_start">#FF4CAF50</color>
+    <color name="capture_stop">#FFF44336</color>
+    <color name="capture_active">#FF4CAF50</color>
+    <color name="capture_idle">#FF9E9E9E</color>
+
+    <color name="accent_blue">#FF2196F3</color>
+    <color name="accent_green">#FF4CAF50</color>
+    <color name="accent_orange">#FFFF9800</color>
 </resources>

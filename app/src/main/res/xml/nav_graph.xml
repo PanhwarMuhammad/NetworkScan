@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:startDestination="@id/captureFragment">
+
+    <fragment
+        android:id="@+id/captureFragment"
+        android:name="com.yourapp.CaptureFragment">
+
+        <action
+            android:id="@+id/action_captureFragment_to_captureDetailFragment"
+            app:destination="@id/captureDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/captureDetailFragment"
+        android:name="com.yourapp.CaptureDetailFragment" />
+
+</navigation>

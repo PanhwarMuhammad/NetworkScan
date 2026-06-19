@@ -33,11 +33,23 @@
             android:layout_height="wrap_content"
             android:text="Import CSV"
             android:textSize="13sp"
+            android:layout_marginRight="3dp"
             style="@style/Widget.Material3.Button"
-
             app:cornerRadius="10dp"
             android:textColor="?attr/colorOnPrimary"
             app:backgroundTint="?attr/colorPrimary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLiveCapture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Live Capture"
+            android:textSize="13sp"
+            style="@style/Widget.Material3.Button"
+            app:cornerRadius="10dp"
+            android:textColor="?attr/colorOnPrimary"
+            app:backgroundTint="?attr/colorPrimary"
+            />
 
         <ImageView
             android:id="@+id/more_info"
