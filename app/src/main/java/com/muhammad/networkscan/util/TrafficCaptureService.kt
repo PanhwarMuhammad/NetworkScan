@@ -27,7 +27,10 @@ import java.io.FileOutputStream
 import java.nio.ByteBuffer
 
 import android.content.pm.ServiceInfo
+import com.muhammad.networkscan.classifier.HeuristicTrafficClassifier
+import com.muhammad.networkscan.live_traffic.TrafficVerdict
 import java.nio.channels.FileChannel
+
 
 class TrafficCaptureService : VpnService() {
 
@@ -38,17 +41,17 @@ class TrafficCaptureService : VpnService() {
         private const val EXPIRE_INTERVAL_MS = 10_000L
         private const val MTU = 32767
 
-        const val ACTION_START = "com.muhammad.networkscan.START"
-        const val ACTION_STOP = "com.muhammad.networkscan.STOP"
-        const val ACTION_SAVE = "com.muhammad.networkscan.SAVE"
+        const val ACTION_START = "com.docutrack.netcapture.START"
+        const val ACTION_STOP = "com.docutrack.netcapture.STOP"
+        const val ACTION_SAVE = "com.docutrack.netcapture.SAVE"
 
-        const val BROADCAST_STATS = "com.muhammad.networkscan.STATS"
+        const val BROADCAST_STATS = "com.docutrack.netcapture.STATS"
         const val EXTRA_TOTAL_FLOWS = "total_flows"
         const val EXTRA_TOTAL_PACKETS = "total_packets"
         const val EXTRA_TOTAL_BYTES = "total_bytes"
         const val EXTRA_IS_RUNNING = "is_running"
 
-        const val BROADCAST_SAVE_RESULT = "com.muhammad.networkscan.SAVE_RESULT"
+        const val BROADCAST_SAVE_RESULT = "com.docutrack.netcapture.SAVE_RESULT"
         const val EXTRA_SAVE_SUCCESS = "save_success"
         const val EXTRA_SAVE_MESSAGE = "save_message"
     }
@@ -65,6 +68,7 @@ class TrafficCaptureService : VpnService() {
     private var expireJob: Job? = null
     private var statsJob: Job? = null
     private val flowTracker = FlowTracker()
+    private val classifier = HeuristicTrafficClassifier()
 
     var isRunning = false
         private set
@@ -277,12 +281,27 @@ class TrafficCaptureService : VpnService() {
                 return@launch
             }
             try {
-                val fileName = ExcelExporter.export(this@TrafficCaptureService, flows)
+                // Classify each flow using the rule-based heuristic classifier.
+                // NOTE: classification order matters for cross-flow detection
+                // (port scan / host discovery / SYN flood patterns) — flows
+                // must be classified in chronological order so the sliding
+                // window sees activity in the order it actually happened.
+                val sortedFlows = flows.sortedBy { it.startTimeMs }
+                val verdicts: Map<String, TrafficVerdict> = sortedFlows.associate { flow ->
+                    flow.flowId to classifier.classify(flow)
+                }
+
+                val fileName = ExcelExporter.export(this@TrafficCaptureService, sortedFlows, verdicts)
                 Log.i(TAG, "Exported ${flows.size} flows to $fileName")
                 broadcastSaveResult(true, "Saved ${flows.size} flows → Downloads/$fileName")
             } catch (e: Exception) {
                 Log.e(TAG, "Export failed", e)
                 broadcastSaveResult(false, "Export failed: ${e.message}")
+            } finally {
+                // Reset classifier state so the next session starts clean —
+                // otherwise stale sliding-window data from this session could
+                // bleed into the next one.
+                classifier.reset()
             }
         }
     }
