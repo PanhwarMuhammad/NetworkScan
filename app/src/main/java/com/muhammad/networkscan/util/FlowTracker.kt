@@ -5,24 +5,15 @@ import com.muhammad.networkscan.models.NetworkFlow
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Tracks active network flows in memory.
- * A flow is a 5-tuple: (srcIp, dstIp, srcPort, dstPort, protocol)
- * Flows that haven't seen a packet for [FLOW_TIMEOUT_MS] are considered complete.
- */
 class FlowTracker {
 
     companion object {
-        // A flow is expired if idle for 60 seconds
         private const val FLOW_TIMEOUT_MS = 60_000L
-        // Hard limit: a flow can't be active longer than 10 minutes
         private const val FLOW_MAX_DURATION_MS = 600_000L
     }
 
-    // Key: "proto_srcIp:srcPort->dstIp:dstPort"
     private val activeFlows = ConcurrentHashMap<String, NetworkFlow>()
 
-    // Completed flows ready to be saved
     private val completedFlows = mutableListOf<NetworkFlow>()
     private val completedLock = Any()
 
@@ -64,11 +55,7 @@ class FlowTracker {
         }
     }
 
-    /**
-     * Scans active flows and moves expired ones to the completed list.
-     * Call this periodically (e.g., every 10 seconds).
-     */
-    fun expireFlows(nowMs: Long) {
+    fun expireFlows(nowMs: Long): List<NetworkFlow> {
         val keysToRemove = mutableListOf<String>()
 
         for ((key, flow) in activeFlows) {
@@ -79,19 +66,18 @@ class FlowTracker {
             }
         }
 
+        val justExpired = mutableListOf<NetworkFlow>()
         for (key in keysToRemove) {
             activeFlows.remove(key)?.let { flow ->
                 synchronized(completedLock) {
                     completedFlows.add(flow)
                 }
+                justExpired.add(flow)
             }
         }
+        return justExpired
     }
 
-    /**
-     * Finalizes all remaining active flows and returns everything collected.
-     * Call this when the session ends.
-     */
     fun finalizeAll(): List<NetworkFlow> {
         val all = mutableListOf<NetworkFlow>()
         for ((_, flow) in activeFlows) {

@@ -2,14 +2,8 @@ package com.muhammad.networkscan.live_traffic
 
 import com.muhammad.networkscan.models.NetworkFlow
 
-/**
- * Tracks recent activity from a single source IP over a sliding time window.
- * This is what makes scan/flood/brute-force detection possible — those patterns
- * are only visible across MULTIPLE flows, never from a single flow in isolation.
- *
- * Window is capped both by time and by count to bound memory use.
- */
 
+ // Tracks recent activity from a single source IP over a sliding time window.
 
 class SourceActivityWindow(private val windowMs: Long = 10_000L) {
 

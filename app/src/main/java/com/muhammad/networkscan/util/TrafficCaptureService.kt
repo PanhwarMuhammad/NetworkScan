@@ -1,5 +1,6 @@
 package com.muhammad.networkscan.util
 
+import android.R.attr.action
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -27,13 +28,19 @@ import java.io.FileOutputStream
 import java.nio.ByteBuffer
 
 import android.content.pm.ServiceInfo
+import androidx.compose.foundation.style.apply
 import com.muhammad.networkscan.classifier.HeuristicTrafficClassifier
 import com.muhammad.networkscan.live_traffic.TrafficVerdict
+import com.muhammad.networkscan.models.NetworkFlow
 import java.nio.channels.FileChannel
+
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 
 class TrafficCaptureService : VpnService() {
-
+    private val classifierMutex = Mutex()
+    private val liveVerdicts = mutableMapOf<String, TrafficVerdict>()
     companion object {
         private const val TAG = "TrafficCaptureService"
         private const val NOTIFICATION_ID = 1001
@@ -54,6 +61,21 @@ class TrafficCaptureService : VpnService() {
         const val BROADCAST_SAVE_RESULT = "com.docutrack.netcapture.SAVE_RESULT"
         const val EXTRA_SAVE_SUCCESS = "save_success"
         const val EXTRA_SAVE_MESSAGE = "save_message"
+
+
+        // used for new interface
+
+        const val BROADCAST_FLOW_EVENT = "com.muhammad.networkscan.FLOW_EVENT"
+        const val EXTRA_FLOW_ID = "flow_id"
+        const val EXTRA_FLOW_TIME = "flow_time"
+        const val EXTRA_FLOW_SRC = "flow_src"
+        const val EXTRA_FLOW_DST = "flow_dst"
+        const val EXTRA_FLOW_PROTOCOL = "flow_protocol"
+        const val EXTRA_FLOW_CATEGORY = "flow_category"
+        const val EXTRA_FLOW_CONFIDENCE = "flow_confidence"
+        const val EXTRA_FLOW_REASON = "flow_reason"
+        const val EXTRA_FLOW_ALERT = "flow_alert"
+
     }
 
     inner class LocalBinder : Binder() {
@@ -77,7 +99,7 @@ class TrafficCaptureService : VpnService() {
     var totalBytes = 0L
         private set
 
-    // ── Lifecycle ──────────────────────────────────────────────────────────────
+    // lifecycle:
 
     override fun onBind(intent: Intent?): IBinder = binder
 
@@ -96,7 +118,7 @@ class TrafficCaptureService : VpnService() {
         super.onDestroy()
     }
 
-    // ── Start / Stop ───────────────────────────────────────────────────────────
+    // Start / Stop :
 
     fun startCapture() {
         if (isRunning) return
@@ -110,9 +132,6 @@ class TrafficCaptureService : VpnService() {
         builder.addDnsServer("8.8.4.4")
         builder.setSession("NetCapture")
 
-        // Exclude our own app from the tunnel to prevent a routing loop.
-        // If we don't do this, network calls made by this service (e.g. during
-        // export) get routed back into the tunnel causing a deadlock on Android 11+.
         try {
             builder.addDisallowedApplication(packageName)
         } catch (e: Exception) {
@@ -155,18 +174,6 @@ class TrafficCaptureService : VpnService() {
         captureJob = serviceScope.launch {
             Log.i(TAG, "Capture loop starting")
 
-            // ── KEY FIX ────────────────────────────────────────────────────────
-            // On Android 11+, FileInputStream.read() on a VPN file descriptor
-            // blocks forever and never delivers data because the TUN fd's blocking
-            // behavior changed. We must use FileChannel (NIO) with a direct
-            // ByteBuffer instead — this works correctly on all API levels 9–16+.
-            //
-            // Additionally, we do NOT write packets back to the fd. On Android 9/10
-            // this was a no-op. On Android 15/16 it interferes with the VPN stack
-            // and can stall the read loop. The OS routes traffic independently;
-            // our job is only to read and parse, not to re-inject.
-            // ──────────────────────────────────────────────────────────────────
-
             val fileChannel: FileChannel = FileInputStream(pfd.fileDescriptor).channel
             val packetBuffer: ByteBuffer = ByteBuffer.allocateDirect(MTU)
 
@@ -176,10 +183,6 @@ class TrafficCaptureService : VpnService() {
                 try {
                     packetBuffer.clear()
 
-                    // FileChannel.read() on a TUN fd works correctly on all
-                    // Android versions. It returns -1 if the tunnel is closed,
-                    // 0 if no packet is available (non-blocking mode), or the
-                    // packet length if a packet was read.
                     val length = fileChannel.read(packetBuffer)
 
                     when {
@@ -189,8 +192,6 @@ class TrafficCaptureService : VpnService() {
                             break
                         }
                         length == 0 -> {
-                            // No packet available right now — yield briefly to avoid
-                            // a busy-spin that would drain the battery
                             delay(1)
                             continue
                         }
@@ -224,16 +225,7 @@ class TrafficCaptureService : VpnService() {
         }
     }
 
-    private fun startExpireLoop() {
-        expireJob = serviceScope.launch {
-            while (isActive) {
-                delay(EXPIRE_INTERVAL_MS)
-                flowTracker.expireFlows(System.currentTimeMillis())
-                Log.d(TAG, "Flows — active: ${flowTracker.getActiveFlowCount()}, " +
-                        "completed: ${flowTracker.getCompletedFlowCount()}")
-            }
-        }
-    }
+
 
     private fun startStatsLoop() {
         statsJob = serviceScope.launch {
@@ -273,6 +265,32 @@ class TrafficCaptureService : VpnService() {
         broadcastStats()
     }
 
+    // new function
+    private fun broadcastFlowEvent(
+        flowId: String,
+        timeText: String,
+        src: String,
+        dst: String,
+        protocol: String,
+        category: String,
+        confidence: String,
+        reason: String,
+        alert: Boolean
+    ) {
+        sendBroadcast(Intent(BROADCAST_FLOW_EVENT).apply {
+            putExtra(EXTRA_FLOW_ID, flowId)
+            putExtra(EXTRA_FLOW_TIME, timeText)
+            putExtra(EXTRA_FLOW_SRC, src)
+            putExtra(EXTRA_FLOW_DST, dst)
+            putExtra(EXTRA_FLOW_PROTOCOL, protocol)
+            putExtra(EXTRA_FLOW_CATEGORY, category)
+            putExtra(EXTRA_FLOW_CONFIDENCE, confidence)
+            putExtra(EXTRA_FLOW_REASON, reason)
+            putExtra(EXTRA_FLOW_ALERT, alert)
+        })
+    }
+
+
     fun saveFlows() {
         serviceScope.launch {
             val flows = flowTracker.finalizeAll()
@@ -281,14 +299,32 @@ class TrafficCaptureService : VpnService() {
                 return@launch
             }
             try {
-                // Classify each flow using the rule-based heuristic classifier.
-                // NOTE: classification order matters for cross-flow detection
-                // (port scan / host discovery / SYN flood patterns) — flows
-                // must be classified in chronological order so the sliding
-                // window sees activity in the order it actually happened.
                 val sortedFlows = flows.sortedBy { it.startTimeMs }
-                val verdicts: Map<String, TrafficVerdict> = sortedFlows.associate { flow ->
-                    flow.flowId to classifier.classify(flow)
+
+                val verdicts: Map<String, TrafficVerdict> = classifierMutex.withLock {
+                    sortedFlows.associate { flow ->
+                        val verdict = liveVerdicts[flow.flowId] ?: run {
+                            // Wasn't expired yet when Save was pressed — classify now
+                            val v = classifier.classify(flow)
+                            liveVerdicts[flow.flowId] = v
+
+                            val timeText = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+                                .format(java.util.Date(flow.lastSeenMs))
+                            broadcastFlowEvent(
+                                flowId = flow.flowId,
+                                timeText = timeText,
+                                src = "${flow.srcIp}:${flow.srcPort}",
+                                dst = "${flow.dstIp}:${flow.dstPort}",
+                                protocol = flow.protocol,
+                                category = v.category.name,
+                                confidence = v.confidence.name,
+                                reason = v.reason,
+                                alert = v.category != com.muhammad.networkscan.live_traffic.TrafficCategory.BENIGN
+                            )
+                            v
+                        }
+                        flow.flowId to verdict
+                    }
                 }
 
                 val fileName = ExcelExporter.export(this@TrafficCaptureService, sortedFlows, verdicts)
@@ -298,15 +334,13 @@ class TrafficCaptureService : VpnService() {
                 Log.e(TAG, "Export failed", e)
                 broadcastSaveResult(false, "Export failed: ${e.message}")
             } finally {
-                // Reset classifier state so the next session starts clean —
-                // otherwise stale sliding-window data from this session could
-                // bleed into the next one.
                 classifier.reset()
+                liveVerdicts.clear()   // reset for next session, same as before
             }
         }
     }
 
-    // ── Notification ───────────────────────────────────────────────────────────
+    // notification
 
     private fun ensureNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -361,7 +395,7 @@ class TrafficCaptureService : VpnService() {
         nm.notify(NOTIFICATION_ID, buildNotification(text))
     }
 
-    // ── Broadcasts ─────────────────────────────────────────────────────────────
+    // Broadcasts
 
     private fun broadcastStats() {
         sendBroadcast(Intent(BROADCAST_STATS).apply {
@@ -381,11 +415,53 @@ class TrafficCaptureService : VpnService() {
         })
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
 
     private fun formatBytes(bytes: Long): String = when {
         bytes < 1024 -> "${bytes}B"
         bytes < 1048576 -> "${"%.1f".format(bytes / 1024.0)}KB"
         else -> "${"%.1f".format(bytes / 1048576.0)}MB"
+    }
+
+
+
+    private fun startExpireLoop() {
+        expireJob = serviceScope.launch {
+            while (isActive) {
+                delay(EXPIRE_INTERVAL_MS)
+                val justExpired = flowTracker.expireFlows(System.currentTimeMillis())
+                if (justExpired.isNotEmpty()) {
+                    classifyAndBroadcast(justExpired)
+                }
+                Log.d(TAG, "Flows — active: ${flowTracker.getActiveFlowCount()}, " +
+                        "completed: ${flowTracker.getCompletedFlowCount()}")
+            }
+        }
+    }
+
+    private suspend fun classifyAndBroadcast(flows: List<NetworkFlow>) {
+        val sorted = flows.sortedBy { it.startTimeMs }
+        classifierMutex.withLock {
+            sorted.forEach { flow ->
+                if (liveVerdicts.containsKey(flow.flowId)) return@forEach  // defensive, shouldn't happen
+
+                val verdict = classifier.classify(flow)
+                liveVerdicts[flow.flowId] = verdict
+
+                val timeText = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+                    .format(java.util.Date(flow.lastSeenMs))
+
+                broadcastFlowEvent(
+                    flowId = flow.flowId,
+                    timeText = timeText,
+                    src = "${flow.srcIp}:${flow.srcPort}",
+                    dst = "${flow.dstIp}:${flow.dstPort}",
+                    protocol = flow.protocol,
+                    category = verdict.category.name,
+                    confidence = verdict.confidence.name,
+                    reason = verdict.reason,
+                    alert = verdict.category != com.muhammad.networkscan.live_traffic.TrafficCategory.BENIGN
+                )
+            }
+        }
     }
 }

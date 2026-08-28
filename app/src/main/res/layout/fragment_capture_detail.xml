@@ -13,12 +13,6 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <!-- ── MACRO: card with labelled rows ─────────────────────────
-             We define a helper style to keep XML DRY.
-             Each "section" is a MaterialCardView containing a TableLayout.
-        ─────────────────────────────────────────────────────────────── -->
-
-        <!-- ===== IDENTITY ===== -->
         <TextView style="@style/NidsSectionHeader" android:text="Flow Identity" />
         <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
             <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -51,7 +45,6 @@
             </TableLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ===== PACKET COUNTS ===== -->
         <TextView style="@style/NidsSectionHeader" android:text="Packet &amp; Byte Counts" />
         <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
             <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -75,7 +68,6 @@
             </TableLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ===== PACKET LENGTH STATS ===== -->
         <TextView style="@style/NidsSectionHeader" android:text="Packet Length Statistics" />
         <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
             <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -113,7 +105,6 @@
             </TableLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ===== FLOW RATES ===== -->
         <TextView style="@style/NidsSectionHeader" android:text="Flow Rate Stats" />
         <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
             <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -131,7 +122,6 @@
             </TableLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ===== IAT ===== -->
         <TextView style="@style/NidsSectionHeader" android:text="Inter-Arrival Times (µs)" />
         <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
             <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -171,7 +161,6 @@
             </TableLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ===== TCP FLAGS ===== -->
         <TextView style="@style/NidsSectionHeader" android:text="TCP Flags" />
         <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
             <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -187,7 +176,6 @@
             </TableLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ===== RATIOS / SEGMENT SIZES ===== -->
         <TextView style="@style/NidsSectionHeader" android:text="Ratios &amp; Segment Sizes" />
         <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
             <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -205,7 +193,6 @@
             </TableLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ===== SUBFLOW ===== -->
         <TextView style="@style/NidsSectionHeader" android:text="Subflow Stats" />
         <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
             <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -227,7 +214,6 @@
             </TableLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ===== ACTIVE / IDLE ===== -->
         <TextView style="@style/NidsSectionHeader" android:text="Active / Idle Periods (µs)" />
         <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
             <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -259,7 +245,6 @@
             </TableLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ===== EXTRAS ===== -->
         <TextView style="@style/NidsSectionHeader" android:text="App / Encryption Info" />
         <com.google.android.material.card.MaterialCardView style="@style/NidsCard">
             <TableLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -275,7 +260,6 @@
             </TableLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ===== CLASSIFICATION ===== -->
         <TextView style="@style/NidsSectionHeader" android:text="Classification" />
         <com.google.android.material.card.MaterialCardView style="@style/NidsCard"
             android:layout_marginBottom="24dp">

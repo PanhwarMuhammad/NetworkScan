@@ -1,13 +1,9 @@
 package com.muhammad.networkscan.live_traffic
 
 
-/**
- * Result of classifying a single flow.
- *
- * This is a HEURISTIC, RULE-BASED classification — not a trained ML model.
- * It is intentionally conservative: it flags only patterns with well-established
- * networking justification, and defaults to BENIGN/UNKNOWN when signals are weak.
- */
+//Result of classifying a single flow.
+ //This is a HEURISTIC, RULE-BASED classification; not a trained ML model.
+
 data class TrafficVerdict(
     val flowId: String,
     val category: TrafficCategory,
@@ -27,7 +23,7 @@ enum class TrafficCategory {
 }
 
 enum class Confidence {
-    LOW,      // Pattern matches but could easily be benign (e.g. one-off retry)
+    LOW,      // Pattern matches but could easily be benign
     MEDIUM,   // Pattern is consistent with the category, some ambiguity remains
     HIGH      // Strong, repeated signal across multiple flows
 }

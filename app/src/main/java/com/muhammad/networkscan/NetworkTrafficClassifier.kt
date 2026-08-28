@@ -1,39 +1,9 @@
 package com.muhammad.networkscan
 
-/**
- * NetworkTrafficClassifier.kt
- *
- * A hand-translated decision tree classifier derived directly from
- * decision_tree_rules.txt. Every branch threshold and condition is
- * copied verbatim from that file — do NOT adjust any numeric constant
- * without re-checking the source file first.
- *
- * FEATURE NOTE — "Magnitue":
- *   The original rules file spells this feature "Magnitue" (missing the 'd').
- *   It is renamed here to [magnitude] for readability, but every threshold
- *   value and split condition is unchanged.
- *   *** SEARCH "magnitude" in your dataset mapping code and verify it maps
- *       to the column literally named "Magnitue" in the CSV. ***
- *
- * TRUNCATED BRANCHES:
- *   32 branches in the original file are marked "truncated branch of depth N".
- *   These sub-trees were cut off during export and their rules are unknown.
- *   Every such branch returns [UNKNOWN_TRUNCATED] so you can spot them
- *   at runtime and decide how to handle them (e.g. majority-class fallback).
- *
- */
 object NetworkTrafficClassifier {
 
-    // -------------------------------------------------------------------------
-    // Return value for branches that were truncated in the exported rule file.
-    // -------------------------------------------------------------------------
     const val UNKNOWN_TRUNCATED = "UNKNOWN_TRUNCATED (Rule coverage limitation)"
 
-    // -------------------------------------------------------------------------
-    // Class number map — source: "Class names:" section in decision_tree_rules.txt
-    // Integer key = class index used during sklearn training.
-    // *** DO NOT reorder — these numbers come directly from the rules file. ***
-    // -------------------------------------------------------------------------
     val CLASS_NUMBER_MAP: Map<String, Int> = mapOf(
         "Backdoor_Malware"        to 0,
         "BenignTraffic"           to 1,
@@ -71,19 +41,11 @@ object NetworkTrafficClassifier {
         "XSS"                     to 33
     )
 
-    /**
-     * Returns the class number (0-33) for a given class name.
-     * Returns -1 if the name is not in the map (e.g. UNKNOWN_TRUNCATED).
-     */
     fun classNumberFor(className: String): Int =
         CLASS_NUMBER_MAP[className] ?: -1
 
 
 
-    // -------------------------------------------------------------------------
-    // Data class representing one network-flow row from your dataset.
-    // Field names match dataset column names exactly, EXCEPT where noted.
-    // -------------------------------------------------------------------------
     data class NetworkFlowSample(
         val min: Double,               // "Min"
         val max: Double,               // "Max"
@@ -98,8 +60,7 @@ object NetworkTrafficClassifier {
         val srate: Double,             // "Srate"
         val covariance: Double,        // "Covariance"
 
-        // *** RENAMED: dataset column is "Magnitue" (typo) → mapped to [magnitude] here ***
-        val magnitude: Double,         // "Magnitue"  ← check your CSV column name!
+        val magnitude: Double,         // "Magnitue"
 
         val radius: Double,            // "Radius"
         val weight: Double,            // "Weight"
@@ -107,13 +68,11 @@ object NetworkTrafficClassifier {
         val flowDuration: Double,      // "flow_duration"
         val protocolType: Double,      // "Protocol Type"
 
-        // Protocol flags — stored as 0.0 or 1.0 in the dataset; split at 0.50
         val icmp: Double,              // "ICMP"
         val udp: Double,               // "UDP"
         val http: Double,              // "HTTP"
         val https: Double,             // "HTTPS"
 
-        // TCP flag ratios / counts
         val finFlagNumber: Double,     // "fin_flag_number"
         val pshFlagNumber: Double,     // "psh_flag_number"
         val synFlagNumber: Double,     // "syn_flag_number"
@@ -124,16 +83,10 @@ object NetworkTrafficClassifier {
         val urgCount: Double           // "urg_count"
     )
 
-    // =========================================================================
-    // PUBLIC ENTRY POINT
-    // =========================================================================
     fun classify(s: NetworkFlowSample): String {
         return nodeRoot(s)
     }
 
-    // =========================================================================
-    // ROOT  — line 1:  Min <= 45.26
-    // =========================================================================
     private fun nodeRoot(s: NetworkFlowSample): String {
         return if (s.min <= 45.26) {
             node_L(s)          // left  subtree (Min <= 45.26)
@@ -142,36 +95,22 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // =========================================================================
-    // LEFT BRANCH  (Min <= 45.26)
-    // line 2:  ICMP <= 0.50
-    // =========================================================================
     private fun node_L(s: NetworkFlowSample): String {
         return if (s.icmp <= 0.50) {
             node_L_L(s)        // ICMP <= 0.50
         } else {
-            // line 41:  class: DDoS-ICMP_Flood
             "DDoS-ICMP_Flood"
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Min <= 45.26, ICMP <= 0.50
-    // line 3:  Variance <= 0.68
-    // -------------------------------------------------------------------------
     private fun node_L_L(s: NetworkFlowSample): String {
         return if (s.variance <= 0.68) {
-            // line 4:  class: DoS-UDP_Flood
             "DoS-UDP_Flood"
         } else {
             node_L_L_R(s)      // Variance > 0.68
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Min <= 45.26, ICMP <= 0.50, Variance > 0.68
-    // line 6:  IAT <= 166563800.00
-    // -------------------------------------------------------------------------
     private fun node_L_L_R(s: NetworkFlowSample): String {
         return if (s.iat <= 166563800.00) {
             node_L_L_R_L(s)    // IAT <= 166563800
@@ -180,59 +119,36 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...Variance > 0.68, IAT <= 166563800.00
-    // line 7:  IAT <= 166477944.00
-    // -------------------------------------------------------------------------
     private fun node_L_L_R_L(s: NetworkFlowSample): String {
         return if (s.iat <= 166477944.00) {
             node_L_L_R_L_L(s)
         } else {
-            // line 18-19: IAT > 166477944  →  class: BenignTraffic
             "BenignTraffic"
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...IAT <= 166477944.00
-    // line 8:  Max <= 271.20
-    // -------------------------------------------------------------------------
     private fun node_L_L_R_L_L(s: NetworkFlowSample): String {
         return if (s.max <= 271.20) {
             node_L_L_R_L_L_L(s)
         } else {
-            // line 17:  class: Recon-OSScan
             "Recon-OSScan"
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...Max <= 271.20
-    // line 9:  Tot sum <= 957.07
-    // -------------------------------------------------------------------------
     private fun node_L_L_R_L_L_L(s: NetworkFlowSample): String {
         return if (s.totSum <= 957.07) {
-            // line 10:  Covariance <= 812.24
             if (s.covariance <= 812.24) {
-                // line 11:  class: MITM-ArpSpoofing
                 "MITM-ArpSpoofing"
             } else {
-                // line 13:  class: DDoS-ICMP_Flood
                 "DDoS-ICMP_Flood"
             }
         } else {
-            // line 15:  class: Recon-PortScan
             "Recon-PortScan"
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...Variance > 0.68, IAT > 166563800.00
-    // line 21:  IAT <= 166728808.00
-    // -------------------------------------------------------------------------
     private fun node_L_L_R_R(s: NetworkFlowSample): String {
         return if (s.iat <= 166728808.00) {
-            // line 22:  Std <= 349.22
             if (s.std <= 349.22) {
                 // line 23:  class: MITM-ArpSpoofing
                 "MITM-ArpSpoofing"
@@ -245,13 +161,8 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...IAT > 166728808.00
-    // line 27:  IAT <= 166851128.00
-    // -------------------------------------------------------------------------
     private fun node_L_L_R_R_R(s: NetworkFlowSample): String {
         return if (s.iat <= 166851128.00) {
-            // line 28:  ack_count <= 0.50
             if (s.ackCount <= 0.50) {
                 // line 29:  class: Recon-HostDiscovery
                 "Recon-HostDiscovery"
@@ -264,10 +175,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...IAT > 166851128.00
-    // line 33:  IAT <= 167250632.00
-    // -------------------------------------------------------------------------
     private fun node_L_L_R_R_R_R(s: NetworkFlowSample): String {
         return if (s.iat <= 167250632.00) {
             // line 34:  class: DNS_Spoofing
@@ -284,10 +191,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // =========================================================================
-    // RIGHT BRANCH  (Min > 45.26)
-    // line 43:  Magnitue <= 10.37   ← "Magnitue" is the original column name
-    // =========================================================================
     private fun node_R(s: NetworkFlowSample): String {
         return if (s.magnitude <= 10.37) {   // *** renamed field: magnitude ***
             node_R_L(s)        // magnitude <= 10.37
@@ -296,10 +199,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // =========================================================================
-    // Min > 45.26, magnitude <= 10.37
-    // line 44:  IAT <= 83096004.00
-    // =========================================================================
     private fun node_R_L(s: NetworkFlowSample): String {
         return if (s.iat <= 83096004.00) {
             node_R_L_L(s)
@@ -308,10 +207,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...magnitude <= 10.37, IAT <= 83096004.00
-    // line 45:  UDP <= 0.50
-    // -------------------------------------------------------------------------
     private fun node_R_L_L(s: NetworkFlowSample): String {
         return if (s.udp <= 0.50) {
             node_R_L_L_L(s)   // UDP <= 0.50 (non-UDP)
@@ -319,11 +214,6 @@ object NetworkTrafficClassifier {
             node_R_L_L_R(s)   // UDP >  0.50
         }
     }
-
-    // -------------------------------------------------------------------------
-    // ...UDP <= 0.50, IAT <= 83096004
-    // line 46:  IAT <= 83082784.00
-    // -------------------------------------------------------------------------
     private fun node_R_L_L_L(s: NetworkFlowSample): String {
         return if (s.iat <= 83082784.00) {
             node_R_L_L_L_L(s)
@@ -332,11 +222,6 @@ object NetworkTrafficClassifier {
             "DDoS-SYN_Flood"
         }
     }
-
-    // -------------------------------------------------------------------------
-    // ...IAT <= 83082784.00
-    // line 47:  IAT <= 83009424.00
-    // -------------------------------------------------------------------------
     private fun node_R_L_L_L_L(s: NetworkFlowSample): String {
         return if (s.iat <= 83009424.00) {
             node_R_L_L_L_L_L(s)
@@ -346,10 +231,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...IAT <= 83009424.00
-    // line 48:  IAT <= 82966744.00
-    // -------------------------------------------------------------------------
     private fun node_R_L_L_L_L_L(s: NetworkFlowSample): String {
         return if (s.iat <= 82966744.00) {
             // line 49:  Magnitue <= 10.32  *** renamed: magnitude ***
@@ -366,10 +247,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...UDP > 0.50, IAT <= 83096004
-    // line 60:  IAT <= 78721352.00
-    // -------------------------------------------------------------------------
     private fun node_R_L_L_R(s: NetworkFlowSample): String {
         return if (s.iat <= 78721352.00) {
             node_R_L_L_R_L(s)
@@ -379,10 +256,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...UDP > 0.50, IAT <= 78721352
-    // line 61:  Header_Length <= 18525.96
-    // -------------------------------------------------------------------------
     private fun node_R_L_L_R_L(s: NetworkFlowSample): String {
         return if (s.headerLength <= 18525.96) {
             // line 62:  Number <= 6.50
@@ -398,10 +271,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...Header_Length > 18525.96
-    // line 67:  Rate <= 8455.28
-    // -------------------------------------------------------------------------
     private fun node_R_L_L_R_L_R(s: NetworkFlowSample): String {
         return if (s.rate <= 8455.28) {
             // line 68:  Covariance <= 60.82
@@ -418,10 +287,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // =========================================================================
-    // Min > 45.26, magnitude <= 10.37, IAT > 83096004.00
-    // line 77:  UDP <= 0.50
-    // =========================================================================
     private fun node_R_L_R(s: NetworkFlowSample): String {
         return if (s.udp <= 0.50) {
             node_R_L_R_L(s)
@@ -430,10 +295,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...IAT > 83096004, UDP <= 0.50
-    // line 78:  Std <= 1.16
-    // -------------------------------------------------------------------------
     private fun node_R_L_R_L(s: NetworkFlowSample): String {
         return if (s.std <= 1.16) {
             // line 79:  rst_count <= 0.37
@@ -456,10 +317,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...IAT > 83096004, UDP > 0.50
-    // line 89:  IAT <= 91554624.00
-    // -------------------------------------------------------------------------
     private fun node_R_L_R_R(s: NetworkFlowSample): String {
         return if (s.iat <= 91554624.00) {
             // line 90:  class: DDoS-UDP_Flood
@@ -476,10 +333,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // =========================================================================
-    // Min > 45.26, magnitude > 10.37
-    // line 97:  fin_flag_number <= 0.50
-    // =========================================================================
     private fun node_R_R(s: NetworkFlowSample): String {
         return if (s.finFlagNumber <= 0.50) {
             node_R_R_L(s)      // fin_flag_number <= 0.50
@@ -488,10 +341,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // =========================================================================
-    // ...magnitude > 10.37, fin_flag_number <= 0.50
-    // line 98:  psh_flag_number <= 0.50
-    // =========================================================================
     private fun node_R_R_L(s: NetworkFlowSample): String {
         return if (s.pshFlagNumber <= 0.50) {
             node_R_R_L_L(s)    // psh_flag_number <= 0.50
@@ -500,10 +349,8 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // =========================================================================
     // ...fin_flag_number <= 0.50, psh_flag_number <= 0.50
     // line 99:  syn_flag_number <= 0.50
-    // =========================================================================
     private fun node_R_R_L_L(s: NetworkFlowSample): String {
         return if (s.synFlagNumber <= 0.50) {
             node_R_R_L_L_L(s)  // syn_flag_number <= 0.50
@@ -512,10 +359,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // =========================================================================
-    // ...syn_flag_number <= 0.50
-    // line 100: IAT <= 82964324.00
-    // =========================================================================
     private fun node_R_R_L_L_L(s: NetworkFlowSample): String {
         return if (s.iat <= 82964324.00) {
             node_R_R_L_L_L_L(s)
@@ -1127,10 +970,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // =========================================================================
-    // ...Srate > 173.64
-    // line 338: IAT <= 166730440.00
-    // =========================================================================
     private fun node_R_R_L_R_R_R(s: NetworkFlowSample): String {
         return if (s.iat <= 166730440.00) {
             // line 339: HTTPS <= 0.50
@@ -1160,10 +999,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // ...Srate > 173.64, IAT <= 166730440, HTTPS > 0.50
-    // line 345: Header_Length <= 218869.41
-    // -------------------------------------------------------------------------
     private fun node_R_R_L_R_R_R_HTTPS(s: NetworkFlowSample): String {
         return if (s.headerLength <= 218869.41) {
             // line 346: urg_count <= 23.86
@@ -1206,10 +1041,6 @@ object NetworkTrafficClassifier {
         }
     }
 
-    // =========================================================================
-    // Min > 45.26, magnitude > 10.37, fin_flag_number > 0.50
-    // line 370: syn_count <= 0.75
-    // =========================================================================
     private fun node_R_R_R(s: NetworkFlowSample): String {
         return if (s.synCount <= 0.75) {
             // line 371: class: DDoS-RSTFINFlood

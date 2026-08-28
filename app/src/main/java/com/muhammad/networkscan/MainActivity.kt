@@ -85,16 +85,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // ── Existing CSV import button (unchanged) ────────────────────────────
         btnImport.setOnClickListener { openFilePicker() }
 
-        // ── NEW: Live Capture button ──────────────────────────────────────────
         binding.btnLiveCapture.setOnClickListener {
             openCaptureFragment()
         }
     }
 
-    // ── Opens CaptureFragment as a full-screen overlay ────────────────────────
     private fun openCaptureFragment() {
         supportFragmentManager.beginTransaction()
             .setCustomAnimations(
@@ -108,10 +105,6 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Everything below this line is YOUR ORIGINAL CODE — not a single line
-    // has been changed.
-    // ─────────────────────────────────────────────────────────────────────────
 
     private fun updateNavBar(position: Int) {
         val total = adapter.itemCount

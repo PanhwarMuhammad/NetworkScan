@@ -12,7 +12,6 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- ── Identity ──────────────────────────────────────────────── -->
         <include layout="@layout/card_section_header"
             android:id="@+id/hdr_identity"
              />
@@ -37,13 +36,8 @@
                 <include layout="@layout/row_label_value" android:id="@+id/row_dst_port"/>
                 <include layout="@layout/row_label_value" android:id="@+id/row_duration"/>
 
-                <!-- Named TextViews (actual IDs used in fragment) -->
-                <!-- We define them directly since include+id re-binding is tricky -->
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-        <!-- The easiest approach: one big card with all rows directly. -->
-        <!-- We use a flat list of LabelValue rows per section. -->
 
     </LinearLayout>
 

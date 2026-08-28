@@ -26,54 +26,23 @@ import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 import java.util.concurrent.ConcurrentHashMap
 
-// ─────────────────────────────────────────────────────────────────────────────
-// NetworkCaptureService.kt  –  FIXED version
-//
-// Root cause of "zero counters":
-//   Writing raw IP packets back to the TUN fd does NOT forward them to the
-//   real network. The TUN interface is a virtual NIC; writing to it injects
-//   packets INTO the device (i.e. from network → app direction), not OUT to
-//   the internet. So every packet you read was immediately discarded, apps
-//   got no responses, TCP connections stalled, and eventually apps stopped
-//   sending — giving you zero counters.
-//
-// Fix:
-//   For every UDP datagram we read off TUN, we open a real DatagramChannel,
-//   protect() it (so it bypasses the VPN loop), send the payload to the real
-//   destination, read the reply, and write the reply back into the TUN fd
-//   (which delivers it to the originating app).
-//
-//   TCP is harder to proxy at the raw-packet level. The standard approach on
-//   Android is to redirect TCP to a local SOCKS/HTTP proxy running on
-//   localhost. We implement a lightweight local TCP proxy here:
-//     • For each new TCP flow we accept a connection on a loopback port.
-//     • We open a protected Socket to the real destination.
-//     • We relay bytes in both directions while counting them for FlowTracker.
-//
-//   ICMP and other protocols are observed (parsed, counted) but not forwarded
-//   — they are rare in practice and not needed for feature collection.
-//
-// What you CAN measure via this approach:
-//   ✓ All UDP flows (DNS, QUIC/HTTP3, streaming, games)
-//   ✓ All TCP flows (HTTP, HTTPS, any TCP app)
-//   ✓ Packet counts, byte counts, IAT, flags, port numbers
-//   ✓ TLS SNI (from ClientHello, before encryption)
-//   ✓ Flow duration, rates, all DT features
-//
-// What you CANNOT measure (TLS encrypted payload):
-//   ✗ HTTP request bodies / headers after handshake
-//   ✗ Application-layer content inside HTTPS
-// ─────────────────────────────────────────────────────────────────────────────
 
+// What you CAN measure via this approach:
+//   All UDP flows (DNS, QUIC/HTTP3, streaming, games)
+//  All TCP flows (HTTP, HTTPS, any TCP app)
+//    Packet counts, byte counts, IAT, flags, port numbers
+//   TLS SNI (from ClientHello, before encryption)
+//   Flow duration, rates, all DT features
 class NetworkCaptureService : VpnService() {
 
     companion object {
-        private const val TAG           = "NIDS_DIAG"
-        private const val CHANNEL_ID    = "nids_capture_channel"
+        private const val TAG = "NIDS_DIAG"
+        private const val CHANNEL_ID = "nids_capture_channel"
         private const val NOTIFICATION_ID = 9001
-        const val ACTION_START          = "com.muhammad.networkscan.START_CAPTURE"
-        const val ACTION_STOP           = "com.muhammad.networkscan.STOP_CAPTURE"
-        private const val MTU           = 32767
+        const val ACTION_START = "com.muhammad.networkscan.START_CAPTURE"
+        const val ACTION_STOP = "com.muhammad.networkscan.STOP_CAPTURE"
+        private const val MTU = 32767
+
     }
 
     inner class LocalBinder : Binder() {
@@ -93,7 +62,6 @@ class NetworkCaptureService : VpnService() {
     private lateinit var repo: CaptureRepository
     private lateinit var tracker: FlowTracker
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     override fun onCreate() {
         super.onCreate()
@@ -131,7 +99,6 @@ class NetworkCaptureService : VpnService() {
         super.onDestroy()
     }
 
-    // ── Start ─────────────────────────────────────────────────────────────────
 
     private fun startCapture() {
         Log.d(TAG, "startCapture() called")
@@ -176,7 +143,8 @@ class NetworkCaptureService : VpnService() {
         stopForeground(STOP_FOREGROUND_REMOVE)
     }
 
-    // ── VPN builder ───────────────────────────────────────────────────────────
+
+
 
     private fun buildVpnInterface(): ParcelFileDescriptor? {
         return try {
@@ -188,7 +156,6 @@ class NetworkCaptureService : VpnService() {
                 .addRoute("0.0.0.0", 0)
                 .allowFamily(android.system.OsConstants.AF_INET)
 
-            // Log: try to also allow IPv6 passthrough
             try {
                 builder.allowFamily(android.system.OsConstants.AF_INET6)
                 Log.d(TAG, "IPv6 passthrough allowed")
@@ -205,7 +172,7 @@ class NetworkCaptureService : VpnService() {
         }
     }
 
-    // ── Read loop ─────────────────────────────────────────────────────────────
+
 
     private suspend fun readLoop(pfd: ParcelFileDescriptor) {
         Log.d(TAG, "readLoop() STARTED on thread=${Thread.currentThread().name}")
@@ -217,11 +184,9 @@ class NetworkCaptureService : VpnService() {
 
         while (isRunning) {
             try {
-                // This is the critical read — if nothing comes here, TUN is not receiving
                 val len = withContext(Dispatchers.IO) { input.read(buf) }
                 readAttempts++
 
-                // Log first 5 read attempts verbosely
                 if (readAttempts <= 5) {
                     Log.d(TAG, "read() #$readAttempts returned len=$len")
                 }
@@ -238,7 +203,6 @@ class NetworkCaptureService : VpnService() {
                 packetsProcessed++
                 bytesProcessed += len
 
-                // Log every packet for first 20 packets, then every 100th
                 if (packetsProcessed <= 20 || packetsProcessed % 100 == 0L) {
                     val ipVer  = (buf[0].toInt() and 0xFF) ushr 4
                     val proto  = if (len >= 10) buf[9].toInt() and 0xFF else -1
@@ -247,7 +211,6 @@ class NetworkCaptureService : VpnService() {
                             "first4bytes=${buf[0].toHex()}${buf[1].toHex()}${buf[2].toHex()}${buf[3].toHex()}")
                 }
 
-                // Feed to parser & tracker
                 val nowUs  = System.nanoTime() / 1000
                 val parsed = PacketParser.parse(buf, len, nowUs)
                 if (parsed == null) {
@@ -258,13 +221,6 @@ class NetworkCaptureService : VpnService() {
                 } else {
                     tracker.feed(parsed)
                 }
-
-                // ── IMPORTANT: We are NOT re-injecting or forwarding here ──
-                // For diagnosis we just DROP the packet after reading it.
-                // This means internet will NOT work while diagnosing — that is OK.
-                // We only need to confirm packets ARE being read from TUN.
-                // If packetsProcessed > 0 after 30s of WiFi use, the VPN is working.
-                // If it stays 0, the problem is in VPN setup / permissions.
 
             } catch (e: IOException) {
                 Log.e(TAG, "readLoop IOException: ${e.message} — TUN fd may have closed")
@@ -280,7 +236,6 @@ class NetworkCaptureService : VpnService() {
 
     private fun Byte.toHex() = "%02X".format(this)
 
-    // ── Notification ──────────────────────────────────────────────────────────
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

@@ -2,13 +2,9 @@ package com.muhammad.networkscan.util
 
 import java.nio.ByteBuffer
 
-/**
- * Parses raw IPv4 packets read from the VPN TUN interface.
- * All offsets are in bytes from the start of the IP header.
- */
+
 object PacketParser {
 
-    // IPv4 field offsets
     private const val IP_VER_IHL = 0
     private const val IP_TOTAL_LEN = 2
     private const val IP_PROTOCOL = 9
@@ -16,13 +12,11 @@ object PacketParser {
     private const val IP_DST = 16
     private const val IP_HEADER_MIN = 20
 
-    // TCP field offsets (from start of TCP header)
     private const val TCP_SRC_PORT = 0
     private const val TCP_DST_PORT = 2
     private const val TCP_DATA_OFFSET = 12
     private const val TCP_FLAGS = 13
 
-    // TCP flag masks
     const val FLAG_FIN = 0x01
     const val FLAG_SYN = 0x02
     const val FLAG_RST = 0x04
@@ -30,11 +24,9 @@ object PacketParser {
     const val FLAG_ACK = 0x10
     const val FLAG_URG = 0x20
 
-    // UDP field offsets (from start of UDP header)
     private const val UDP_SRC_PORT = 0
     private const val UDP_DST_PORT = 2
 
-    // Protocol numbers
     const val PROTO_TCP = 6
     const val PROTO_UDP = 17
     const val PROTO_ICMP = 1
@@ -50,15 +42,11 @@ object PacketParser {
         val tcpFlags: Int = 0
     )
 
-    /**
-     * Returns null if the buffer doesn't contain a valid IPv4 packet.
-     */
     fun parse(buffer: ByteArray, length: Int): ParsedPacket? {
         if (length < IP_HEADER_MIN) return null
 
         val bb = ByteBuffer.wrap(buffer, 0, length)
 
-        // Check IPv4 version
         val verIhl = bb.get(IP_VER_IHL).toInt() and 0xFF
         val version = verIhl shr 4
         if (version != 4) return null  // Only handle IPv4
@@ -93,7 +81,6 @@ object PacketParser {
                 dstPort = bb.getShort(ihl + UDP_DST_PORT).toInt() and 0xFFFF
             }
             PROTO_ICMP -> {
-                // ICMP has no ports
             }
         }
 

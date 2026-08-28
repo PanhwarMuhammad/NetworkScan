@@ -9,17 +9,6 @@ import com.muhammad.networkscan.models.FlowRecordConverters
 import com.muhammad.networkscan.models.toCsvRow
 import kotlinx.coroutines.flow.Flow
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CaptureDatabase.kt
-//
-// Room database for persisting FlowRecord objects.
-// Three files in one for convenience:
-//   • FlowRecordDao  – queries
-//   • CaptureDatabase – Room singleton
-//   • CaptureRepository – coroutine-friendly data layer
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ── DAO ───────────────────────────────────────────────────────────────────────
 
 @Dao
 interface FlowRecordDao {
@@ -80,7 +69,7 @@ interface FlowRecordDao {
     suspend fun avgTotalPackets(): Double?
 }
 
-// ── Database ──────────────────────────────────────────────────────────────────
+//Database
 
 @Database(
     entities = [FlowRecord::class],
@@ -109,7 +98,6 @@ abstract class CaptureDatabase : RoomDatabase() {
     }
 }
 
-// ── Repository ────────────────────────────────────────────────────────────────
 
 class CaptureRepository(context: Context) {
 
@@ -130,7 +118,6 @@ class CaptureRepository(context: Context) {
     suspend fun deleteAll()                     = dao.deleteAll()
     suspend fun deleteById(id: Long)            = dao.deleteById(id)
 
-    /** Remove records older than [days] days. Returns count deleted. */
     suspend fun pruneOlderThan(days: Int): Int {
         val cutoffMs = System.currentTimeMillis() - days * 86_400_000L
         return dao.deleteOlderThan(cutoffMs)
@@ -138,7 +125,6 @@ class CaptureRepository(context: Context) {
 
     suspend fun getDistinctLabels(): List<String> = dao.getDistinctLabels()
 
-    /** Export all records as a CSV string (including header row). */
     suspend fun exportCsv(): String {
         val sb = StringBuilder()
         sb.appendLine(CSV_HEADER)

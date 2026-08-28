@@ -4,25 +4,14 @@ package com.muhammad.networkscan.models
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PacketParser.kt
-//
-// Parses raw Layer-3 packets read from the VpnService TUN file descriptor.
-// The VPN tunnel delivers raw IPv4 (and sometimes IPv6) datagrams.
-//
-// What we CAN see:
+// What can it SEE:
 //   • IP header (src/dst addr, TTL, protocol, total length, ID, flags)
 //   • TCP header (src/dst port, seq/ack, flags, window size, header length)
 //   • UDP header (src/dst port, length)
 //   • ICMP type/code
 //   • TLS ClientHello SNI (first byte of TLS records, plaintext extension)
-//
-// What we CANNOT see (encrypted):
-//   • HTTP/2 request bodies, headers after TLS handshake
-//   • Application-layer payload after TLS is established
-// ─────────────────────────────────────────────────────────────────────────────
 
-/** Direction relative to the local device */
+
 enum class Direction { FORWARD, BACKWARD }
 
 data class ParsedPacket(
@@ -30,7 +19,6 @@ data class ParsedPacket(
     val direction: Direction,
 
 
-    // IP layer
     val ipVersion: Int,             // 4 or 6
     val protocol: Int,              // 6=TCP, 17=UDP, 1=ICMP
     val srcIp: String,
@@ -39,7 +27,6 @@ data class ParsedPacket(
     val ttl: Int,
     val ipHeaderLength: Int,        // bytes
 
-    // Transport layer
     val srcPort: Int,               // 0 for ICMP
     val dstPort: Int,
     val tcpFlags: Int,              // bitmask; 0 for UDP/ICMP
@@ -49,10 +36,8 @@ data class ParsedPacket(
     val tcpAck: Long,
     val payloadLength: Int,         // bytes of data after transport header
 
-    // TLS (best-effort)
     val tlsSni: String,             // "" if not a TLS ClientHello
 
-    // Derived
     val isEncrypted: Boolean        // port 443/8443/853/465/995/993
 ) {
     val PROTO_TCP = 6
@@ -63,7 +48,6 @@ data class ParsedPacket(
     val isUdp: Boolean get() = protocol == PROTO_UDP
     val isIcmp: Boolean get() = protocol == PROTO_ICMP
 
-    // TCP flag helpers
     val flagFin: Boolean get() = tcpFlags and 0x01 != 0
     val flagSyn: Boolean get() = tcpFlags and 0x02 != 0
     val flagRst: Boolean get() = tcpFlags and 0x04 != 0
@@ -82,11 +66,7 @@ object PacketParser {
 
     private val ENCRYPTED_PORTS = setOf(443, 8443, 853, 465, 995, 993, 8883)
 
-    /**
-     * Parse a raw packet from the VPN tunnel.
-     * [rawBytes] – the exact bytes read from the ParcelFileDescriptor input stream.
-     * Returns null if the packet is malformed or unsupported (e.g. IPv6 without enough bytes).
-     */
+
     fun parse(rawBytes: ByteArray, length: Int, nowUs: Long): ParsedPacket? {
         if (length < 20) return null   // minimum IPv4 header
 
@@ -101,7 +81,6 @@ object PacketParser {
         }
     }
 
-    // ── IPv4 ─────────────────────────────────────────────────────────────────
 
     private fun parseIPv4(buf: ByteBuffer, length: Int, nowUs: Long): ParsedPacket? {
         val ihl      = (buf.get(0).toInt() and 0x0F) * 4   // IP header length bytes
@@ -130,7 +109,7 @@ object PacketParser {
             transportBuf=transportBuf, transportOffset=ihl, remaining=length - ihl)
     }
 
-    // ── IPv6 (minimal) ───────────────────────────────────────────────────────
+    // --IPv6 (minimal)
 
     private fun parseIPv6(buf: ByteBuffer, length: Int, nowUs: Long): ParsedPacket? {
         if (length < 40) return null
@@ -148,7 +127,7 @@ object PacketParser {
             transportBuf=transportBuf, transportOffset=40, remaining=length - 40)
     }
 
-    // ── Transport dispatch ───────────────────────────────────────────────────
+    // Transport Dispatch
 
     private fun buildPacket(
         nowUs: Long, ipVersion: Int, protocol: Int,
@@ -190,7 +169,6 @@ object PacketParser {
 
         val encrypted = ENCRYPTED_PORTS.contains(dstPort) || ENCRYPTED_PORTS.contains(srcPort)
 
-        // Direction: if srcPort is a high ephemeral port and dstPort is well-known → FORWARD
         val direction = if (srcPort > 1023 && dstPort <= 1023) Direction.FORWARD
         else if (dstPort > 1023 && srcPort <= 1023) Direction.BACKWARD
         else Direction.FORWARD  // default
@@ -218,43 +196,30 @@ object PacketParser {
         )
     }
 
-    // ── TLS SNI extraction ───────────────────────────────────────────────────
-
-    /**
-     * Try to read the SNI from a TLS ClientHello.
-     * Format reference: RFC 5246 / RFC 6066
-     * Returns "" if not a ClientHello or SNI is absent.
-     */
     private fun extractSni(data: ByteArray, offset: Int, length: Int): String {
-        // TLS record: ContentType(1) Version(2) Length(2) Handshake...
         if (length < 5) return ""
         if (data[offset].toInt() and 0xFF != 0x16) return "" // not Handshake
         val recordLen = ((data[offset+3].toInt() and 0xFF) shl 8) or
                 (data[offset+4].toInt() and 0xFF)
         if (length < 5 + recordLen) return ""
 
-        // Handshake: Type(1) Length(3) ClientHello body
         val hOffset = offset + 5
         if (data[hOffset].toInt() and 0xFF != 0x01) return "" // not ClientHello
 
-        // Skip: type(1) + len(3) + version(2) + random(32) + sessionIdLen(1) → 39
         var pos = hOffset + 4 + 2 + 32
         if (pos >= offset + length) return ""
         val sessionIdLen = data[pos++].toInt() and 0xFF
         pos += sessionIdLen
 
-        // cipher suites
         if (pos + 2 > offset + length) return ""
         val cipherSuiteLen = ((data[pos].toInt() and 0xFF) shl 8) or
                 (data[pos+1].toInt() and 0xFF)
         pos += 2 + cipherSuiteLen
 
-        // compression
         if (pos + 1 > offset + length) return ""
         val compLen = data[pos++].toInt() and 0xFF
         pos += compLen
 
-        // extensions length
         if (pos + 2 > offset + length) return ""
         val extLen = ((data[pos].toInt() and 0xFF) shl 8) or (data[pos+1].toInt() and 0xFF)
         pos += 2
@@ -265,7 +230,6 @@ object PacketParser {
             val extDataLen = ((data[pos+2].toInt() and 0xFF) shl 8) or (data[pos+3].toInt() and 0xFF)
             pos += 4
             if (extType == 0x0000) { // server_name
-                // list length(2) type(1) name length(2) name
                 if (pos + 5 <= extEnd) {
                     val nameLen = ((data[pos+3].toInt() and 0xFF) shl 8) or
                             (data[pos+4].toInt() and 0xFF)
@@ -279,8 +243,6 @@ object PacketParser {
         }
         return ""
     }
-
-    // ── Formatting helpers ───────────────────────────────────────────────────
 
     private fun formatIPv4(buf: ByteBuffer, offset: Int): String =
         "${buf.get(offset).toInt() and 0xFF}." +

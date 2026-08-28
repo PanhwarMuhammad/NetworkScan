@@ -17,9 +17,6 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CaptureViewModel.kt
-// ─────────────────────────────────────────────────────────────────────────────
 
 data class CaptureFilter(
     val protocol: String? = null,      // null = all
@@ -40,26 +37,21 @@ class CaptureViewModel(app: Application) : AndroidViewModel(app) {
     private val repo =
         CaptureRepository(app)
 
-    // ── Filter state ──────────────────────────────────────────────────────────
     private val _filter = MutableStateFlow(CaptureFilter())
     val filter: StateFlow<CaptureFilter> = _filter
 
-    // ── Flow records (reacts to filter changes) ───────────────────────────────
     val records: StateFlow<List<FlowRecord>> = _filter
         .flatMapLatest { f ->
             repo.filtered(f.protocol, f.flaggedOnly, f.limit)
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    // ── Stats ─────────────────────────────────────────────────────────────────
     private val _stats = MutableStateFlow(CaptureStats())
     val stats: StateFlow<CaptureStats> = _stats
 
-    // ── Toast / messages ──────────────────────────────────────────────────────
     private val _message = MutableSharedFlow<String>()
     val message: SharedFlow<String> = _message
 
-    // ── Service binding ───────────────────────────────────────────────────────
     private var captureService: NetworkCaptureService? = null
 
     private val serviceConnection = object : ServiceConnection {
@@ -99,7 +91,6 @@ class CaptureViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    // ── Filter controls ───────────────────────────────────────────────────────
 
     fun setProtocolFilter(proto: String?) {
         _filter.value = _filter.value.copy(protocol = proto)
@@ -113,7 +104,6 @@ class CaptureViewModel(app: Application) : AndroidViewModel(app) {
         _filter.value = CaptureFilter()
     }
 
-    // ── Data management ───────────────────────────────────────────────────────
 
     fun deleteAll() = viewModelScope.launch {
         repo.deleteAll()
@@ -129,7 +119,6 @@ class CaptureViewModel(app: Application) : AndroidViewModel(app) {
         _message.emit("Deleted $count records older than $days days")
     }
 
-    /** Export all records to a CSV file in the app's external files directory. */
     fun exportCsv(context: Context) = viewModelScope.launch(Dispatchers.IO) {
         try {
             val csv  = repo.exportCsv()
@@ -142,7 +131,6 @@ class CaptureViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    // ── Individual record detail ───────────────────────────────────────────────
 
     private val _selectedRecord = MutableStateFlow<FlowRecord?>(null)
     val selectedRecord: StateFlow<FlowRecord?> = _selectedRecord

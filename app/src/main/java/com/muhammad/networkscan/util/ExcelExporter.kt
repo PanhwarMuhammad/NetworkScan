@@ -27,13 +27,9 @@ object ExcelExporter {
     private val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
     private val fileNameFormatter = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
 
-    /**
-     * Exports the list of flows to an Excel file in the Downloads folder.
-     * [verdicts] maps flowId -> classification result. Pass an empty map if
-     * classification was not run (the Category/Confidence/Reason columns
-     * will show "N/A").
-     * Returns the file name on success, or throws on failure.
-     */
+
+     // Exports the list of flows to an Excel file in the Downloads folder.
+
     fun export(
         context: Context,
         flows: List<NetworkFlow>,
@@ -44,7 +40,6 @@ object ExcelExporter {
 
         val workbook = XSSFWorkbook()
 
-        // ── Styles ─────────────────────────────────────────────────────────────
         val headerFont = workbook.createFont().apply {
             bold = true
             color = IndexedColors.WHITE.index
@@ -68,13 +63,11 @@ object ExcelExporter {
 
         val normalStyle = workbook.createCellStyle()
 
-        // Highlight style for rows flagged as non-benign by the classifier
         val flaggedStyle = workbook.createCellStyle().apply {
             fillForegroundColor = IndexedColors.LIGHT_ORANGE.index
             fillPattern = FillPatternType.SOLID_FOREGROUND
         }
 
-        // ── Sheet 1: Flow Records ──────────────────────────────────────────────
         val flowSheet = workbook.createSheet("Flow Records")
 
         val headers = listOf(
@@ -93,7 +86,6 @@ object ExcelExporter {
             "Category", "Confidence", "Classification Reason"
         )
 
-        // Header row
         val headerRow = flowSheet.createRow(0)
         headers.forEachIndexed { i, title ->
             val cell = headerRow.createCell(i)
@@ -151,12 +143,7 @@ object ExcelExporter {
             cell(29, verdict?.reason ?: "Classification not run")
         }
 
-        // Set fixed column widths manually. NOTE: We intentionally do NOT use
-        // Sheet.autoSizeColumn() — it internally calls into java.awt.font.FontRenderContext
-        // to measure text with a real font renderer, and java.awt does not exist
-        // on Android (ART has no AWT implementation). Calling it crashes with
-        // NoClassDefFoundError on a real device/emulator, even though it works
-        // fine in a desktop JVM unit test. Width units are in 1/256 of a character.
+
         val flowColumnWidths = intArrayOf(
             12, 10,                          // Flow ID, Protocol
             16, 11,                          // Source IP, Source Port
@@ -175,7 +162,6 @@ object ExcelExporter {
             flowSheet.setColumnWidth(i, width * 256)
         }
 
-        // ── Sheet 2: Summary ───────────────────────────────────────────────────
         val summarySheet = workbook.createSheet("Summary")
         val summaryData = listOf(
             listOf("NetCapture Session Summary", ""),
@@ -206,11 +192,9 @@ object ExcelExporter {
                 row.getCell(1).cellStyle = headerStyle
             }
         }
-        // Fixed widths — see note above about why autoSizeColumn is avoided on Android.
         summarySheet.setColumnWidth(0, 28 * 256)
         summarySheet.setColumnWidth(1, 16 * 256)
 
-        // ── Sheet 3: Flagged Flows (only non-benign verdicts, for quick review) ─
         val flaggedFlows = flows.filter { verdicts[it.flowId]?.category != null &&
                 verdicts[it.flowId]?.category != TrafficCategory.BENIGN }
         if (flaggedFlows.isNotEmpty()) {
@@ -244,9 +228,7 @@ object ExcelExporter {
             }
         }
 
-        // ── Write to Downloads ─────────────────────────────────────────────────
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // Scoped storage (Android 10+)
             val resolver = context.contentResolver
             val contentValues = ContentValues().apply {
                 put(MediaStore.Downloads.DISPLAY_NAME, fileName)
@@ -258,7 +240,6 @@ object ExcelExporter {
                 ?: throw IllegalStateException("Failed to create MediaStore entry")
             resolver.openOutputStream(uri)?.use { workbook.write(it) }
         } else {
-            // Legacy storage (Android 9 and below)
             val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             downloadsDir.mkdirs()
             val file = File(downloadsDir, fileName)

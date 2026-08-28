@@ -8,11 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.muhammad.networkscan.models.RecordResult
 
-/**
- * ViewPager2 adapter.
- * Each page shows one RecordResult as a card.
- * The list is grown live during processing via addRecord().
- */
+
 class RecordAdapter : RecyclerView.Adapter<RecordAdapter.RecordViewHolder>() {
 
     private val records = mutableListOf<RecordResult>()
@@ -65,8 +61,6 @@ class RecordAdapter : RecyclerView.Adapter<RecordAdapter.RecordViewHolder>() {
                 txtVerdict.setTextColor(Color.parseColor("#2E7D32"))
                 cardRoot.setBackgroundColor(Color.parseColor("#F3FFF3"))
             }
-
-            // classNumber is -1 when the name is UNKNOWN_TRUNCATED
 
             if (r.classNumber >= 0) {
                 txtClassNum.visibility = View.VISIBLE

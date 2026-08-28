@@ -8,17 +8,12 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FlowTracker.kt
-//
-// Maintains a table of active flows, accumulates per-packet statistics, and
+
+// This class maintains a table of active flows, accumulates per-packet statistics, and
 // emits a completed FlowRecord when:
 //   • A TCP FIN or RST is seen (flow teardown)
 //   • A flow has been idle for IDLE_TIMEOUT_US microseconds
 //   • The active-flow table exceeds MAX_FLOWS (oldest evicted)
-//
-// All arithmetic uses Long/Double to avoid overflow on large flows.
-// ─────────────────────────────────────────────────────────────────────────────
 
 class FlowTracker(
     private val onFlowComplete: (FlowRecord) -> Unit,
@@ -26,7 +21,6 @@ class FlowTracker(
     private val maxFlows: Int = 512
 ) {
 
-    // ── Flow key ─────────────────────────────────────────────────────────────
 
     private data class FlowKey(
         val proto: Int,
@@ -35,7 +29,6 @@ class FlowTracker(
     )
 
     private fun packetKey(p: ParsedPacket): FlowKey {
-        // Make key direction-agnostic (canonicalize src/dst)
         val (aIp, aPort, bIp, bPort) =
             if (p.srcIp < p.dstIp || (p.srcIp == p.dstIp && p.srcPort <= p.dstPort))
                 listOf(p.srcIp, p.srcPort, p.dstIp, p.dstPort)
@@ -44,7 +37,6 @@ class FlowTracker(
         return FlowKey(p.protocol, aIp.toString(), aPort as Int, bIp.toString(), bPort as Int)
     }
 
-    // ── Mutable accumulator ───────────────────────────────────────────────────
 
     private inner class FlowAccumulator(first: ParsedPacket) {
         val key          = packetKey(first)
@@ -312,11 +304,9 @@ class FlowTracker(
         }
     }
 
-    // ── Public API ────────────────────────────────────────────────────────────
 
     private val flows = LinkedHashMap<FlowKey, FlowAccumulator>()
 
-    /** Feed one parsed packet into the tracker. */
     fun feed(packet: ParsedPacket) {
         val key = packetKey(packet)
 
@@ -334,10 +324,6 @@ class FlowTracker(
         }
     }
 
-    /**
-     * Call periodically (e.g. every 10 s) to expire idle flows.
-     * [nowUs] = System.nanoTime() / 1000
-     */
     fun evictIdle(nowUs: Long) {
         val toEvict = flows.entries
             .filter { (_, acc) -> (nowUs - acc.lastSeenUs) > idleTimeoutUs }
@@ -348,7 +334,6 @@ class FlowTracker(
         }
     }
 
-    /** Flush all remaining flows (e.g. on service stop). */
     fun flushAll() {
         flows.values.forEach { onFlowComplete(it.toRecord()) }
         flows.clear()
@@ -360,7 +345,6 @@ class FlowTracker(
         onFlowComplete(oldest.value.toRecord())
     }
 
-    // ── Statistics helpers ────────────────────────────────────────────────────
 
     private fun List<Double>.mean(): Double =
         if (isEmpty()) 0.0 else sum() / size

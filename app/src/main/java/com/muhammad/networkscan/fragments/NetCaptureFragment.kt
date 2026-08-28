@@ -17,8 +17,11 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.muhammad.networkscan.R
+import com.muhammad.networkscan.adapter.LiveFlowAdapter
 import com.muhammad.networkscan.databinding.FragmentNetCaptureBinding
+import com.muhammad.networkscan.models.LiveFlowUiModel
 import com.muhammad.networkscan.util.TrafficCaptureService
 
 class NetCaptureFragment : Fragment() {
@@ -29,7 +32,9 @@ class NetCaptureFragment : Fragment() {
     private var captureService: TrafficCaptureService? = null
     private var serviceBound = false
 
-    // ── VPN permission launcher ────────────────────────────────────────────────
+    private val liveItems = mutableListOf<LiveFlowUiModel>()
+    private val liveAdapter = LiveFlowAdapter()
+
     private val vpnPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -41,7 +46,6 @@ class NetCaptureFragment : Fragment() {
             }
         }
 
-    // ── Service connection ─────────────────────────────────────────────────────
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             captureService = (binder as TrafficCaptureService.LocalBinder).getService()
@@ -54,7 +58,6 @@ class NetCaptureFragment : Fragment() {
         }
     }
 
-    // ── Stats broadcast receiver ───────────────────────────────────────────────
     private val statsReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
@@ -74,7 +77,6 @@ class NetCaptureFragment : Fragment() {
         }
     }
 
-    // ── Fragment lifecycle ─────────────────────────────────────────────────────
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -87,21 +89,32 @@ class NetCaptureFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupClickListeners()
         updateUiState(isRunning = false)
+
+        binding.recyclerLiveFlows.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerLiveFlows.adapter = liveAdapter
+        binding.recyclerLiveFlows.setHasFixedSize(false)
     }
 
     override fun onStart() {
         super.onStart()
-        // Bind to service if it's already running
         val bindIntent = Intent(requireContext(), TrafficCaptureService::class.java)
         requireContext().bindService(bindIntent, serviceConnection, Context.BIND_AUTO_CREATE)
 
-        // Register broadcast receiver
         val filter = IntentFilter().apply {
             addAction(TrafficCaptureService.BROADCAST_STATS)
             addAction(TrafficCaptureService.BROADCAST_SAVE_RESULT)
         }
         ContextCompat.registerReceiver(
             requireContext(), statsReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+
+
+        val flowFilter = IntentFilter(TrafficCaptureService.BROADCAST_FLOW_EVENT)
+        ContextCompat.registerReceiver(
+            requireContext(),
+            flowReceiver,
+            flowFilter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
         )
     }
 
@@ -112,6 +125,8 @@ class NetCaptureFragment : Fragment() {
             serviceBound = false
         }
         requireContext().unregisterReceiver(statsReceiver)
+
+        requireContext().unregisterReceiver(flowReceiver)
     }
 
     override fun onDestroyView() {
@@ -119,19 +134,16 @@ class NetCaptureFragment : Fragment() {
         _binding = null
     }
 
-    // ── Click listeners ────────────────────────────────────────────────────────
 
     private fun setupClickListeners() {
         binding.btnStartStop.setOnClickListener {
             val service = captureService
             if (service != null && service.isRunning) {
-                // Stop the service
                 val intent = Intent(requireContext(), TrafficCaptureService::class.java).apply {
                     action = TrafficCaptureService.ACTION_STOP }
                 requireContext().startService(intent)
                 updateUiState(isRunning = false)
             } else {
-                // Request VPN permission first
                 val vpnIntent = VpnService.prepare(requireContext())
                 if (vpnIntent != null) {
                     vpnPermissionLauncher.launch(vpnIntent)
@@ -156,7 +168,6 @@ class NetCaptureFragment : Fragment() {
         }
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
 
     private fun startService() {
         val intent = Intent(requireContext(), TrafficCaptureService::class.java)
@@ -164,6 +175,19 @@ class NetCaptureFragment : Fragment() {
         ContextCompat.startForegroundService(requireContext(), intent)
         updateUiState(isRunning = true)
         Toast.makeText(requireContext(), "Capture started.", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun openLiveMonitor() {
+        parentFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                android.R.anim.slide_in_left,
+                android.R.anim.slide_out_right,
+                android.R.anim.slide_in_left,
+                android.R.anim.slide_out_right
+            )
+            .add(android.R.id.content, LiveMonitorFragment(), "LiveMonitorFragment")
+            .addToBackStack("LiveMonitorFragment")
+            .commit()
     }
 
     private fun updateUiFromService() {
@@ -215,5 +239,51 @@ class NetCaptureFragment : Fragment() {
         bytes < 1024 -> "${bytes} B"
         bytes < 1024 * 1024 -> "${"%.1f".format(bytes / 1024.0)} KB"
         else -> "${"%.1f".format(bytes / (1024.0 * 1024.0))} MB"
+    }
+
+
+
+    private val flowReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != TrafficCaptureService.BROADCAST_FLOW_EVENT) return
+
+            val flowId = intent.getStringExtra(TrafficCaptureService.EXTRA_FLOW_ID) ?: return
+
+            val item = LiveFlowUiModel(
+                flowId = flowId,
+                timeText = intent.getStringExtra(TrafficCaptureService.EXTRA_FLOW_TIME) ?: "--:--:--",
+                src = intent.getStringExtra(TrafficCaptureService.EXTRA_FLOW_SRC) ?: "",
+                dst = intent.getStringExtra(TrafficCaptureService.EXTRA_FLOW_DST) ?: "",
+                protocol = intent.getStringExtra(TrafficCaptureService.EXTRA_FLOW_PROTOCOL) ?: "",
+                category = intent.getStringExtra(TrafficCaptureService.EXTRA_FLOW_CATEGORY) ?: "",
+                confidence = intent.getStringExtra(TrafficCaptureService.EXTRA_FLOW_CONFIDENCE) ?: "",
+                reason = intent.getStringExtra(TrafficCaptureService.EXTRA_FLOW_REASON) ?: "",
+                isAlert = intent.getBooleanExtra(TrafficCaptureService.EXTRA_FLOW_ALERT, false)
+            )
+
+            val newList = listOf(item) + liveAdapter.currentList.map { it.copy() }
+            liveAdapter.submitList(newList)
+            updateLiveSummary(newList)
+        }
+    }
+    private fun updateLiveSummary(list: List<LiveFlowUiModel>) {
+        if (_binding == null) return
+
+        val total = list.size
+        val suspicious = list.count { it.isAlert }
+        val benign = total - suspicious
+
+        binding.tvThreatSummary.text =
+            "Live feed: $total records, $benign benign, $suspicious suspicious."
+
+        binding.tvFlowCount.text = total.toString()
+
+        val latest = list.firstOrNull()
+        binding.tvThreatSummary.setTextColor(
+            ContextCompat.getColor(
+                requireContext(),
+                if (suspicious > 0) R.color.capture_stop else R.color.capture_active
+            )
+        )
     }
 }

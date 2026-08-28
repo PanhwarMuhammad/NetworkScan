@@ -7,22 +7,6 @@ import androidx.room.TypeConverters
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FlowRecord.kt
-//
-// Represents one complete network flow record.
-// Fields map directly to the feature categories your Decision Tree expects:
-//   • Protocol / IP info
-//   • Flow-level timing stats
-//   • Forward & backward packet stats
-//   • Packet-length stats
-//   • Flag counts
-//   • Subflow stats
-//   • Active / idle timing
-//   • Raw label (unknown until classified)
-//
-// Storage: Room entity   Export: Gson → JSON/CSV
-// ─────────────────────────────────────────────────────────────────────────────
 
 @Entity(tableName = "flow_records")
 @TypeConverters(FlowRecordConverters::class)
@@ -32,11 +16,9 @@ data class FlowRecord(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
 
-    // ── Identity ──────────────────────────────────────────────────────────────
-    val flowId: String = "",          // src_ip:src_port → dst_ip:dst_port @ startMs
-    val captureTimestamp: Long = 0L,  // wall clock when flow was finalised (ms)
+    val flowId: String = "",
+    val captureTimestamp: Long = 0L,
 
-    // ── Protocol / addressing ─────────────────────────────────────────────────
     val protocol: Int = 0,            // 6=TCP, 17=UDP, 1=ICMP
     val protocolName: String = "",    // "TCP" / "UDP" / "ICMP" / "OTHER"
     val srcIp: String = "",
@@ -45,74 +27,61 @@ data class FlowRecord(
     val dstPort: Int = 0,
     val destinationPort: Int = 0,     // alias kept for DT feature name compatibility
 
-    // ── Flow duration ─────────────────────────────────────────────────────────
     val flowDurationUs: Long = 0L,    // microseconds (feature: Flow Duration)
 
-    // ── Packet counts ─────────────────────────────────────────────────────────
     val totalFwdPackets: Long = 0L,
     val totalBwdPackets: Long = 0L,
     val totalPackets: Long = 0L,
 
-    // ── Byte counts ───────────────────────────────────────────────────────────
     val totalLengthFwdPackets: Long = 0L,
     val totalLengthBwdPackets: Long = 0L,
 
-    // ── Packet length stats (all packets) ────────────────────────────────────
     val packetLengthMax: Double = 0.0,
     val packetLengthMin: Double = 0.0,
     val packetLengthMean: Double = 0.0,
     val packetLengthStd: Double = 0.0,
     val packetLengthVariance: Double = 0.0,
 
-    // ── Forward packet length stats ───────────────────────────────────────────
     val fwdPacketLengthMax: Double = 0.0,
     val fwdPacketLengthMin: Double = 0.0,
     val fwdPacketLengthMean: Double = 0.0,
     val fwdPacketLengthStd: Double = 0.0,
 
-    // ── Backward packet length stats ──────────────────────────────────────────
     val bwdPacketLengthMax: Double = 0.0,
     val bwdPacketLengthMin: Double = 0.0,
     val bwdPacketLengthMean: Double = 0.0,
     val bwdPacketLengthStd: Double = 0.0,
 
-    // ── Flow rate stats ───────────────────────────────────────────────────────
     val flowBytesPerSec: Double = 0.0,
     val flowPacketsPerSec: Double = 0.0,
     val fwdPacketsPerSec: Double = 0.0,
     val bwdPacketsPerSec: Double = 0.0,
 
-    // ── IAT – inter-arrival times (all packets, µs) ───────────────────────────
     val flowIatMean: Double = 0.0,
     val flowIatStd: Double = 0.0,
     val flowIatMax: Double = 0.0,
     val flowIatMin: Double = 0.0,
 
-    // ── IAT – forward ─────────────────────────────────────────────────────────
     val fwdIatTotal: Double = 0.0,
     val fwdIatMean: Double = 0.0,
     val fwdIatStd: Double = 0.0,
     val fwdIatMax: Double = 0.0,
     val fwdIatMin: Double = 0.0,
 
-    // ── IAT – backward ────────────────────────────────────────────────────────
     val bwdIatTotal: Double = 0.0,
     val bwdIatMean: Double = 0.0,
     val bwdIatStd: Double = 0.0,
     val bwdIatMax: Double = 0.0,
     val bwdIatMin: Double = 0.0,
 
-    // ── TCP flags – forward ───────────────────────────────────────────────────
     val fwdPshFlags: Int = 0,
     val fwdUrgFlags: Int = 0,
     val fwdHeaderLength: Long = 0L,
 
-    // ── TCP flags – backward ──────────────────────────────────────────────────
     val bwdPshFlags: Int = 0,
     val bwdUrgFlags: Int = 0,
     val bwdHeaderLength: Long = 0L,
 
-    // ── TCP flag counts (per flow) ────────────────────────────────────────────
     val finFlagCount: Int = 0,
     val synFlagCount: Int = 0,
     val rstFlagCount: Int = 0,
@@ -122,13 +91,11 @@ data class FlowRecord(
     val cweFlagCount: Int = 0,
     val eceFlagCount: Int = 0,
 
-    // ── Ratios ────────────────────────────────────────────────────────────────
     val downUpRatio: Double = 0.0,           // bwd bytes / fwd bytes
     val avgPacketSize: Double = 0.0,
     val avgFwdSegmentSize: Double = 0.0,
     val avgBwdSegmentSize: Double = 0.0,
 
-    // ── Bulk stats ────────────────────────────────────────────────────────────
     val fwdAvgBytesBulk: Double = 0.0,
     val fwdAvgPacketsBulk: Double = 0.0,
     val fwdAvgBulkRate: Double = 0.0,
@@ -136,17 +103,14 @@ data class FlowRecord(
     val bwdAvgPacketsBulk: Double = 0.0,
     val bwdAvgBulkRate: Double = 0.0,
 
-    // ── Subflow stats ─────────────────────────────────────────────────────────
     val subflowFwdPackets: Long = 0L,
     val subflowFwdBytes: Long = 0L,
     val subflowBwdPackets: Long = 0L,
     val subflowBwdBytes: Long = 0L,
 
-    // ── Init window sizes ─────────────────────────────────────────────────────
     val initWinBytesFwd: Int = 0,
     val initWinBytesBwd: Int = 0,
 
-    // ── Active / Idle timing (µs) ─────────────────────────────────────────────
     val activeMin: Double = 0.0,
     val activeMean: Double = 0.0,
     val activeMax: Double = 0.0,
@@ -156,24 +120,19 @@ data class FlowRecord(
     val idleMax: Double = 0.0,
     val idleStd: Double = 0.0,
 
-    // ── Act data packets ─────────────────────────────────────────────────────
     val actDataPktFwd: Long = 0L,
     val minSegSizeFwd: Int = 0,
 
-    // ── Extras available from VpnService ─────────────────────────────────────
-    val appPackageName: String = "",    // originating app (best-effort via /proc/net)
+    // Extras available from VpnService
+    val appPackageName: String = "",
     val isEncrypted: Boolean = false,   // dstPort 443 / 853 / 8443 etc.
-    val tlsSni: String = "",            // TLS SNI if parseable from ClientHello
+    val tlsSni: String = "",
 
-    // ── Classification (filled in later by your DT) ───────────────────────────
     val predictedLabel: String = "UNCLASSIFIED",
     val confidence: Float = 0f,
     val isFlagged: Boolean = false
 )
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Room type converters
-// ─────────────────────────────────────────────────────────────────────────────
 class FlowRecordConverters {
     private val gson = Gson()
 
@@ -182,9 +141,6 @@ class FlowRecordConverters {
         gson.fromJson(v, object : TypeToken<List<Double>>() {}.type) ?: emptyList()
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Extension: export one record as a CSV row (header-matched)
-// ─────────────────────────────────────────────────────────────────────────────
 fun FlowRecord.toCsvRow(): String = listOf(
     id, flowId, captureTimestamp, protocol, protocolName,
     srcIp, dstIp, srcPort, dstPort, destinationPort,

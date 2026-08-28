@@ -15,10 +15,6 @@ import com.muhammad.networkscan.models.FlowRecord
 import java.text.SimpleDateFormat
 import java.util.*
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CaptureAdapter.kt
-// ─────────────────────────────────────────────────────────────────────────────
-
 class CaptureAdapter(
     private val onItemClick: (FlowRecord) -> Unit
 ) : ListAdapter<FlowRecord, CaptureAdapter.ViewHolder>(DIFF) {

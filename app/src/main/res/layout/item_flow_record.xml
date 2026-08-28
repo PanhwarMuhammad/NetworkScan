@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- res/layout/item_flow_record.xml -->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -18,7 +17,6 @@
         android:padding="10dp"
         android:gravity="center_vertical">
 
-        <!-- Protocol badge -->
         <TextView
             android:id="@+id/tv_protocol"
             android:layout_width="44dp"
@@ -29,7 +27,6 @@
             android:textColor="@android:color/white"
              />
 
-        <!-- Centre column -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -101,7 +98,6 @@
 
         </LinearLayout>
 
-        <!-- Right column: timestamp + icons -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -122,7 +118,6 @@
                 android:orientation="horizontal"
                 android:layout_marginTop="4dp">
 
-                <!-- Lock icon for encrypted -->
                 <ImageView
                     android:id="@+id/iv_encrypted"
                     android:layout_width="16dp"
@@ -132,7 +127,6 @@
                     android:visibility="gone"
                     android:contentDescription="Encrypted" />
 
-                <!-- Flag icon for anomalies -->
                 <ImageView
                     android:id="@+id/iv_flag"
                     android:layout_width="16dp"

@@ -44,20 +44,21 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.foundation)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     // ViewModel
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0")
 
     // LiveData
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.11.0")
 
     // Lifecycle Runtime
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
 
     // Fragment KTX (required for by viewModels() in Fragment)
-    implementation("androidx.fragment:fragment-ktx:1.8.9")
+    implementation("androidx.fragment:fragment-ktx:1.9.0")
 
     // Activity KTX (required for by viewModels() in Activity)
     implementation("androidx.activity:activity-ktx:1.13.0")
@@ -66,25 +67,24 @@ dependencies {
     kapt("androidx.room:room-compiler:2.8.4")
 
     implementation("androidx.room:room-ktx:2.8.4")
-    implementation("com.google.code.gson:gson:2.13.1")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.9.6")
-    implementation("androidx.navigation:navigation-ui-ktx:2.9.6")
+    implementation("com.google.code.gson:gson:2.14.0")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.10.0")
+    implementation("androidx.navigation:navigation-ui-ktx:2.10.0")
 
-    implementation("org.apache.poi:poi-ooxml:5.2.5")
+    implementation("org.apache.poi:poi-ooxml:5.5.1")
 
     // POI requires these XML libraries on Android
-    // (Android doesn't ship with the full javax.xml stack POI expects)
     implementation("xerces:xercesImpl:2.12.2")
-    implementation("xml-apis:xml-apis:1.4.01")
+    implementation("xml-apis:xml-apis:2.0.2")
 
     // Required by poi-ooxml for zip handling
-    implementation("org.apache.commons:commons-compress:1.26.1")
-    implementation("commons-io:commons-io:2.16.1")
-    implementation("org.apache.xmlbeans:xmlbeans:5.2.0")
+    implementation("org.apache.commons:commons-compress:1.28.0")
+    implementation("commons-io:commons-io:2.22.0")
+    implementation("org.apache.xmlbeans:xmlbeans:5.4.0")
 
     // ── NetCapture: Coroutines (if not already added) ───────────────────
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
